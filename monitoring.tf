@@ -69,10 +69,10 @@ data "archive_file" "lambda_zip" {
 resource "aws_lambda_function" "drift_handler" {
   function_name = "${var.prefix}-drift-handler"
   role          = aws_iam_role.lambda_role.arn
-  handler       = "qpp.lambda_handler"
+  handler       = "app.lambda_handler"
   runtime       = "python3.9"  
-  filename      = "data.archive_file.lambda_zip.output_path"  // Lambda関数のコードをZIPファイルとして指定
-  source_code_hash = "data.archive_file.lambda_zip.output_base64sha256" // コードの変更を検知するためのハッシュ値
+  filename      = data.archive_file.lambda_zip.output_path  // Lambda関数のコードをZIPファイルとして指定
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256 // コードの変更を検知するためのハッシュ値
 }
 
 # Lambda関数とSQSキューのトリガー設定
@@ -83,15 +83,23 @@ resource "aws_lambda_event_source_mapping" "sqs_to_lambda" {
 }
 
 # EventBridge
-# CloudFormationのドリフト検出イベントをキャッチするルール
+# CloudTrail経由でインフラの手動変更（ドリフト）をキャッチするルール
 resource "aws_cloudwatch_event_rule" "drift_rule" {
   name        = "${var.prefix}-drift-rule"
-  description = "Detect infrastructure drift or changes"
+  description = "Detect manual infrastructure changes via CloudTrail"
 
-  // CloudFormationのドリフト検出イベントをキャッチするためのイベントパターン
+  // AWSコンソールからの手動変更（APIコール）を検知するためのパターン
   event_pattern = jsonencode({
-    source = ["aws.ecs"],
-    detail-type = ["ECS Task State Change"],
+    source = ["aws.ec2"],
+    detail-type = ["AWS API Call via CloudTrail"],
+    detail = {
+      eventSource = ["ec2.amazonaws.com"]
+      eventName = [
+        "AuthorizeSecurityGroupIngress", # ポートを開けた時
+        "RevokeSecurityGroupIngress",    # ポートを閉じた時
+        "ModifySecurityGroupRules"       # ルールを変更した時
+      ]
+    }
   })
 }
 
