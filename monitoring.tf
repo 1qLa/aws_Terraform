@@ -73,6 +73,13 @@ resource "aws_lambda_function" "drift_handler" {
   runtime       = "python3.9"  
   filename      = data.archive_file.lambda_zip.output_path  // Lambda関数のコードをZIPファイルとして指定
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256 // コードの変更を検知するためのハッシュ値
+
+  # 環境変数の設定（SlackのWebhook URLを渡す）
+  environment {
+    variables = {
+      SLACK_WEBHOOK_URL = var.SLACK_WEBHOOK_URL # ← 変数を参照する
+    }
+  }
 }
 
 # Lambda関数とSQSキューのトリガー設定
