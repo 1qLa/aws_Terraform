@@ -11,6 +11,23 @@ resource "aws_sqs_queue" "drift_queue" {
   message_retention_seconds = 1209600
 }
 
+# EventBridgeからSNSへのメッセージ送信を許可するアクセスポリシー
+resource "aws_sns_topic_policy" "allow_eventbridge_to_sns" {
+  arn = aws_sns_topic.drift_alerts.arn
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "events.amazonaws.com"
+      }
+      Action = "sns:Publish"
+      Resource = aws_sns_topic.drift_alerts.arn
+    }]
+  })
+}
+
 # SNSトピックとSQSキューのサブスクリプション(SNSトピックにメッセージが送信されたときにSQSキューに配信されるようにする)
 resource "aws_sns_topic_subscription" "sns_to_sqs" {
   topic_arn = aws_sns_topic.drift_alerts.arn
@@ -49,6 +66,22 @@ resource "aws_iam_role" "lambda_role" {
         Effect = "Allow"
         Principal = { Service = "lambda.amazonaws.com" }
         Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+# Lambdaが環境変数（KMS）を復号するための権限
+resource "aws_iam_role_policy" "lambda_kms_decrypt" {
+  name = "${var.prefix}-lambda-kms-decrypt"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = "kms:Decrypt"
+      # エラーログに出てきたKMSキーのARNを指定
+      Resource = "arn:aws:kms:ap-northeast-1:859261896300:key/849d6ad7-cafc-4ac2-a832-309e9a38811a"
     }]
   })
 }
@@ -95,19 +128,22 @@ resource "aws_cloudwatch_event_rule" "drift_rule" {
   name        = "${var.prefix}-drift-rule"
   description = "Detect manual infrastructure changes via CloudTrail"
 
+  // 1分ごとのタイマー
+  schedule_expression = "rate(1 minute)"
+
   // AWSコンソールからの手動変更（APIコール）を検知するためのパターン
-  event_pattern = jsonencode({
-    source = ["aws.ec2"],
-    detail-type = ["AWS API Call via CloudTrail"],
-    detail = {
-      eventSource = ["ec2.amazonaws.com"]
-      eventName = [
-        "AuthorizeSecurityGroupIngress", # ポートを開けた時
-        "RevokeSecurityGroupIngress",    # ポートを閉じた時
-        "ModifySecurityGroupRules"       # ルールを変更した時
-      ]
-    }
-  })
+  # event_pattern = jsonencode({
+  #   source = ["aws.ec2"],
+  #   detail-type = ["AWS API Call via CloudTrail"],
+  #   detail = {
+  #     eventSource = ["ec2.amazonaws.com"]
+  #     eventName = [
+  #       "AuthorizeSecurityGroupIngress", # ポートを開けた時
+  #       "RevokeSecurityGroupIngress",    # ポートを閉じた時
+  #       "ModifySecurityGroupRules"       # ルールを変更した時
+  #     ]
+  #   }
+  # })
 }
 
 # イベントを検知したらSNSキューにメッセージを送るターゲット設定
