@@ -2,7 +2,7 @@
 
 ## 📊 発表資料 (Presentation)
 本プロジェクトのアーキテクチャ図解や、システム構築の背景については以下のスライドをご覧ください。
-* **[スライド資料はこちら]([ここにCanvaの共有URLを貼り付けてください](https://canva.link/gwnhaikvsf2rkdl))**
+* **[スライド資料はこちら](https://canva.link/gwnhaikvsf2rkdl)**
 
 ---
 
