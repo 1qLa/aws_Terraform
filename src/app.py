@@ -7,7 +7,7 @@ def lambda_handler(event, context):
     # Terraformで設定した環境変数からSlackのURLを読み込む
     slack_url = os.environ['SLACK_WEBHOOK_URL']
     
-    # curlの "payload={...}" に相当する送りたいメッセージを作成
+    # 送りたいメッセージを作成
     slack_message = {
         "username": "drift-notice",
         "text": "AWSの構成ドリフト（手動変更）を検知しました。",

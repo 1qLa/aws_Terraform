@@ -128,22 +128,22 @@ resource "aws_cloudwatch_event_rule" "drift_rule" {
   name        = "${var.prefix}-drift-rule"
   description = "Detect manual infrastructure changes via CloudTrail"
 
-  // 1分ごとのタイマー
-  schedule_expression = "rate(1 minute)"
+  # // 1分ごとのタイマー
+  # schedule_expression = "rate(1 minute)"
 
   // AWSコンソールからの手動変更（APIコール）を検知するためのパターン
-  # event_pattern = jsonencode({
-  #   source = ["aws.ec2"],
-  #   detail-type = ["AWS API Call via CloudTrail"],
-  #   detail = {
-  #     eventSource = ["ec2.amazonaws.com"]
-  #     eventName = [
-  #       "AuthorizeSecurityGroupIngress", # ポートを開けた時
-  #       "RevokeSecurityGroupIngress",    # ポートを閉じた時
-  #       "ModifySecurityGroupRules"       # ルールを変更した時
-  #     ]
-  #   }
-  # })
+  event_pattern = jsonencode({
+    source = ["aws.ec2"],
+    detail-type = ["AWS API Call via CloudTrail"],
+    detail = {
+      eventSource = ["ec2.amazonaws.com"]
+      eventName = [
+        "AuthorizeSecurityGroupIngress", # ポートを開けた時
+        "RevokeSecurityGroupIngress",    # ポートを閉じた時
+        "ModifySecurityGroupRules"       # ルールを変更した時
+      ]
+    }
+  })
 }
 
 # イベントを検知したらSNSキューにメッセージを送るターゲット設定
