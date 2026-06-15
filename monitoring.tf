@@ -86,6 +86,23 @@ resource "aws_iam_role_policy" "lambda_kms_decrypt" {
   })
 }
 
+# Lambda 探偵に CloudTrail の録画データを見る権限を付与
+resource "aws_iam_role_policy" "lambda_cloudtrail_policy" {
+  name = "lambda-cloudtrail-policy"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "cloudtrail:LookupEvents"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # Lambdaに必要なIAMポリシーをアタッチ
 resource "aws_iam_role_policy_attachment" "lambda_sqs" {
   role       = aws_iam_role.lambda_role.name
@@ -95,7 +112,7 @@ resource "aws_iam_role_policy_attachment" "lambda_sqs" {
 # Lambda関数
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_dir = "src" // Lambda関数のコードファイルが含まれるディレクトリ
+  source_dir = "src"                  // Lambda関数のコードファイルが含まれるディレクトリ
   output_path = "lambda_function.zip" // 出力されるZIPファイルのパス
 }
 
@@ -104,13 +121,13 @@ resource "aws_lambda_function" "drift_handler" {
   role          = aws_iam_role.lambda_role.arn
   handler       = "app.lambda_handler"
   runtime       = "python3.9"  
-  filename      = data.archive_file.lambda_zip.output_path  // Lambda関数のコードをZIPファイルとして指定
+  filename      = data.archive_file.lambda_zip.output_path            // Lambda関数のコードをZIPファイルとして指定
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256 // コードの変更を検知するためのハッシュ値
 
   # 環境変数の設定（SlackのWebhook URLを渡す）
   environment {
     variables = {
-      SLACK_WEBHOOK_URL = var.SLACK_WEBHOOK_URL # ← 変数を参照する
+      SLACK_WEBHOOK_URL = var.SLACK_WEBHOOK_URL # 変数を参照する
     }
   }
 }
@@ -123,25 +140,21 @@ resource "aws_lambda_event_source_mapping" "sqs_to_lambda" {
 }
 
 # EventBridge
-# CloudTrail経由でインフラの手動変更（ドリフト）をキャッチするルール
+# config経由でインフラの手動変更（ドリフト）をキャッチするルール
 resource "aws_cloudwatch_event_rule" "drift_rule" {
   name        = "${var.prefix}-drift-rule"
-  description = "Detect manual infrastructure changes via CloudTrail"
-
-  # // 1分ごとのタイマー
-  # schedule_expression = "rate(1 minute)"
+  description = "Detect configuration changes via AWS Config"
 
   // AWSコンソールからの手動変更（APIコール）を検知するためのパターン
   event_pattern = jsonencode({
-    source = ["aws.ec2"],
-    detail-type = ["AWS API Call via CloudTrail"],
+    source = ["aws.config"],
+    detail-type = ["Config Configuration Item Change"],
     detail = {
-      eventSource = ["ec2.amazonaws.com"]
-      eventName = [
-        "AuthorizeSecurityGroupIngress", # ポートを開けた時
-        "RevokeSecurityGroupIngress",    # ポートを閉じた時
-        "ModifySecurityGroupRules"       # ルールを変更した時
-      ]
+      messageType = ["ConfigurationItemChangeNotification"],
+      configurationItem = {
+        # 監視対象を「セキュリティグループ」に限定する設定
+        resourceType = ["AWS::EC2::SecurityGroup"]
+      }
     }
   })
 }
