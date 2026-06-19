@@ -159,7 +159,7 @@ resource "aws_cloudwatch_event_rule" "drift_rule" {
         resourceId   = [
           "sg-0ae907c5511a2f1bd",
           "sg-025c5cc37956439ef",
-          # "sg-07407cd5e5c4a550e"
+          # "sg-07407cd5e5c4a550e",
           ] 
       }
     }
