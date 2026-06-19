@@ -1,38 +1,3 @@
-# import json
-# # 外部（今回はSlack）にHTTP通信を送るためのツール
-# import urllib.request
-# import os
-
-# def lambda_handler(event, context):
-#     # Terraformで設定した環境変数からSlackのURLを読み込む
-#     slack_url = os.environ['SLACK_WEBHOOK_URL']
-    
-#     # 送りたいメッセージを作成
-#     slack_message = {
-#         "username": "drift-notice",
-#         "text": "AWSの構成ドリフト（手動変更）を検知しました。",
-#         "icon_emoji": ":ghost:"
-#     }
-
-#     # curlの "-X POST" と同じように、PythonでPOST送信の準備
-#     req = urllib.request.Request(
-#         slack_url, 
-#         data=json.dumps(slack_message).encode('utf-8'), 
-#         headers={'Content-Type': 'application/json'}
-#     )
-
-#     # 送信した際のレスポンスを確認して、成功か失敗かを出力
-#     try:
-#         response = urllib.request.urlopen(req)
-#         print("Slackへの通知に成功しました。")
-#     except Exception as e:
-#         print(f"エラーが発生しました: {e}")
-
-#     return {
-#         'statusCode': 200,
-#         'body': 'Finished drift detection process.'
-#     }
-
 import json
 import os
 import urllib.request
@@ -44,6 +9,29 @@ slack_url = os.environ['SLACK_WEBHOOK_URL']
 
 # CloudTrailを検索するためのクライアントを準備
 cloudtrail = boto3.client('cloudtrail')
+
+# よく使われるポートとプロトコル名の対応表
+PORT_NAMES = {
+    22: "SSH",
+    80: "HTTP",
+    443: "HTTPS",
+    3306: "MySQL / Aurora",
+    5432: "PostgreSQL",
+    6379: "Redis",
+    8080: "カスタムWeb (8080)",
+    -1: "すべて許可" # セキュリティグループで -1 は「すべて」を意味します
+}
+
+def get_port_name(port_num):
+    """
+    ポート番号（数値や文字列）を受け取り、対応する名前があれば返す関数。
+    なければそのままの番号を返す。
+    """
+    try:
+        port_int = int(float(port_num)) # "22.0" のような文字が来ても安全に整数に変換
+        return PORT_NAMES.get(port_int, str(port_int))
+    except (ValueError, TypeError):
+        return str(port_num)
 
 # Configの複雑なDiff（差分）JSONから、ポート番号やIPアドレスを分かりやすい日本語に翻訳する関数
 def parse_sg_diff(diff_data):
@@ -67,6 +55,16 @@ def parse_sg_diff(diff_data):
                 to_port = target_data.get('toPort', 'All')
                 protocol = target_data.get('ipProtocol', 'All')
                 
+                # ここで関数を呼び出して、ポート番号を名前に変換
+                from_port_name = get_port_name(from_port)
+                to_port_name = get_port_name(to_port)
+                
+                # 表示の調整（22-22なら "SSH(22)"、範囲なら "8000-9000" のようにする）
+                if from_port == to_port:
+                    port_display = f"{from_port_name} (ポート:{from_port})" if from_port_name != str(from_port) else f"ポート:{from_port}"
+                else:
+                    port_display = f"ポート:{from_port}〜{to_port}"
+
                 # IPアドレス(CIDR)の抽出
                 ip_ranges = [r.get('cidrIp') for r in target_data.get('ipv4Ranges', [])]
                 ip_str = ", ".join(ip_ranges) if ip_ranges else "特定のIPなし"
@@ -74,7 +72,7 @@ def parse_sg_diff(diff_data):
                 # 絵文字で視覚的にわかりやすく
                 icon = "🔵 [追加]" if change_type == 'CREATE' else "🔴 [削除]" if change_type == 'DELETE' else "🟡 [変更]"
                 
-                diff_messages.append(f"{icon} ポート: {from_port}-{to_port} (プロトコル: {protocol}) | 許可IP: {ip_str}")
+                diff_messages.append(f"{icon} {port_display} (プロトコル: {protocol}) | 許可IP: {ip_str}")
         
         # タグが変更された場合の処理（おまけ）
         elif 'Tags' in key:
@@ -129,15 +127,21 @@ def lambda_handler(event, context):
                 username = "Error (権限不足)"
 
         # Slack通知メッセージの作成（Configの差分情報 ＋ CloudTrailの犯人情報）
-        message = "*【構成ドリフト検知】*\n"
+        message = "⚠️ *【構成ドリフト検知】*\n"
         message += f"*- 対象リソース:* `{resource_type}` (`{resource_id}`)\n"
         message += f"*- 操作者:* `{username}`\n"
         message += f"*- 変更内容:* {parsed_diff_text}\n"
 
         # Slackへ送信
+        payload = {
+            'text': message,
+            'username': 'drift-notice',  # ボットの名前
+            'icon_emoji': ':ghost:'      # お化けのアイコン
+        }
+
         req = urllib.request.Request(
             slack_url,
-            data=json.dumps({'text': message}).encode('utf-8'),
+            data=json.dumps(payload).encode('utf-8'),
             headers={'Content-Type': 'application/json'}
         )
         urllib.request.urlopen(req)

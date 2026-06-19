@@ -155,7 +155,12 @@ resource "aws_cloudwatch_event_rule" "drift_rule" {
         # 監視対象を「セキュリティグループ」に限定する設定
         resourceType = ["AWS::EC2::SecurityGroup"]
 
-        resourceId   = ["sg-0ae907c5511a2f1bd"] # 監視対象のセキュリティグループのIDを指定
+        # 監視対象のセキュリティグループのIDを指定
+        resourceId   = [
+          "sg-0ae907c5511a2f1bd",
+          "sg-025c5cc37956439ef",
+          # "sg-07407cd5e5c4a550e"
+          ] 
       }
     }
   })
