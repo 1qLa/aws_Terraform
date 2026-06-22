@@ -127,10 +127,12 @@ def lambda_handler(event, context):
                 username = "Error (権限不足)"
 
         # Slack通知メッセージの作成（Configの差分情報 ＋ CloudTrailの犯人情報）
-        message = "⚠️ *【構成ドリフト検知】*\n"
+        message = "--------------------------------------------------\n"
+        message += "⚠️ *【構成ドリフト検知】*\n"
         message += f"*- 対象リソース:* `{resource_type}` (`{resource_id}`)\n"
         message += f"*- 操作者:* `{username}`\n"
         message += f"*- 変更内容:* {parsed_diff_text}\n"
+        message += "--------------------------------------------------\n"
 
         # Slackへ送信
         payload = {

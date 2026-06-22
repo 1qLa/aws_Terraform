@@ -103,6 +103,25 @@ resource "aws_iam_role_policy" "lambda_cloudtrail_policy" {
   })
 }
 
+# Lambda 探偵に EC2 のセキュリティグループ名を取得する権限を付与
+resource "aws_iam_role_policy" "lambda_ec2_policy" {
+  name = "lambda-ec2-describe-sg-policy"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = [
+          "ec2:DescribeSecurityGroups"
+        ]
+        Resource = "*"
+      },
+    ]
+  })
+}
+
 # Lambdaに必要なIAMポリシーをアタッチ
 resource "aws_iam_role_policy_attachment" "lambda_sqs" {
   role       = aws_iam_role.lambda_role.name
@@ -159,6 +178,7 @@ resource "aws_cloudwatch_event_rule" "drift_rule" {
         resourceId   = [
           "sg-0ae907c5511a2f1bd",
           "sg-025c5cc37956439ef",
+          "sg-03ad3594a97fac821",
           # "sg-07407cd5e5c4a550e",
           ] 
       }
