@@ -67,3 +67,16 @@ resource "aws_security_group" "rds_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+# 踏み台サーバー用のセキュリティグループ
+resource "aws_security_group" "bastion_sg" {
+  name        = "${var.prefix}-bastion-sg"
+  description = "Security Group for Bastion Host"
+  vpc_id      = aws_vpc.main.id 
+
+  # 初期状態ではルールを書かない
+  
+  tags = {
+    Name = "bastion-sg"
+  }
+}
