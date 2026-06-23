@@ -9,6 +9,7 @@ slack_url = os.environ['SLACK_WEBHOOK_URL']
 
 # CloudTrailを検索するためのクライアントを準備
 cloudtrail = boto3.client('cloudtrail')
+ec2_client = boto3.client('ec2') # SGの名前を取得するためのEC2クライアント
 
 # よく使われるポートとプロトコル名の対応表
 PORT_NAMES = {
@@ -23,15 +24,25 @@ PORT_NAMES = {
 }
 
 def get_port_name(port_num):
-    """
-    ポート番号（数値や文字列）を受け取り、対応する名前があれば返す関数。
-    なければそのままの番号を返す。
-    """
+    # ポート番号（数値や文字列）を受け取り、対応する名前があれば返す関数
+    # なければそのままの番号を返す
     try:
         port_int = int(float(port_num)) # "22.0" のような文字が来ても安全に整数に変換
         return PORT_NAMES.get(port_int, str(port_int))
     except (ValueError, TypeError):
         return str(port_num)
+    
+def get_sg_name(sg_id):
+    """
+    セキュリティグループIDから、そのSGの名前(GroupName)を取得する関数
+    """
+    try:
+        response = ec2_client.describe_security_groups(GroupIds=[sg_id])
+        if response['SecurityGroups']:
+            return response['SecurityGroups'][0].get('GroupName', 'Unknown')
+    except Exception as e:
+        print(f"SG名の取得エラー ({sg_id}): {e}")
+    return "Unknown"    
 
 # Configの複雑なDiff（差分）JSONから、ポート番号やIPアドレスを分かりやすい日本語に翻訳する関数
 def parse_sg_diff(diff_data):
@@ -96,6 +107,11 @@ def lambda_handler(event, context):
         resource_id = config_item.get('resourceId', 'Unknown')
         resource_type = config_item.get('resourceType', 'Unknown')
         event_time_str = config_event.get('time') # 例: "2026-06-15T09:00:00Z"
+
+        # SGの名前を取得する処理
+        resource_name = "Unknown"
+        if resource_type == 'AWS::EC2::SecurityGroup':
+            resource_name = get_sg_name(resource_id)
 
         # 作った翻訳関数にDiffデータを渡す
         diff_data = detail.get('configurationItemDiff', {})
