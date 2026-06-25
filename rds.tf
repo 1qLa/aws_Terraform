@@ -17,9 +17,12 @@ resource "aws_db_instance" "main" {
   engine                  = "mysql"
   engine_version          = "8.0"
   instance_class          = "db.t3.micro"
-  username                = "root"
-  password                = "123qwecc"
+  db_name                 = data.aws_ssm_parameter.database_name.value
+  username                = data.aws_ssm_parameter.username.value
+  password                = data.aws_ssm_parameter.password.value
   db_subnet_group_name    = aws_db_subnet_group.main.name
   vpc_security_group_ids  = [aws_security_group.rds_sg.id]
   skip_final_snapshot     = true
+  storage_encrypted      = true  
+  # multi_az               = true
 }

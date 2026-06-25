@@ -10,21 +10,3 @@ variable "SLACK_WEBHOOK_URL" {
   type        = string
   sensitive   = true # 画面にURLが表示されるのを防ぐセキュリティ設定
 }
-
-variable "DATABASE_NAME" {
-  description = "RDS Database Name"
-  type        = string
-  default     = "mydb"
-}
-
-variable "USERNAME" {
-  description = "RDS Username"
-  type        = string
-  default     = "root"
-}
-
-variable "PASSWORD" {
-  description = "RDS Password"
-  type        = string
-  default     = "123qwecc"
-}
