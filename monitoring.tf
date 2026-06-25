@@ -103,7 +103,7 @@ resource "aws_iam_role_policy" "lambda_cloudtrail_policy" {
   })
 }
 
-# Lambda 探偵に EC2 のセキュリティグループ名を取得する権限を付与
+# LambdaにEC2のセキュリティグループ名を取得する権限を付与
 resource "aws_iam_role_policy" "lambda_ec2_policy" {
   name = "lambda-ec2-describe-sg-policy"
   role = aws_iam_role.lambda_role.id

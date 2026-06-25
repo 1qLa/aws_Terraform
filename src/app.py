@@ -33,9 +33,7 @@ def get_port_name(port_num):
         return str(port_num)
     
 def get_sg_name(sg_id):
-    """
-    セキュリティグループIDから、そのSGの名前(GroupName)を取得する関数
-    """
+    # セキュリティグループIDから、そのSGの名前(GroupName)を取得する関数
     try:
         response = ec2_client.describe_security_groups(GroupIds=[sg_id])
         if response['SecurityGroups']:
@@ -142,10 +140,12 @@ def lambda_handler(event, context):
                 print(f"CloudTrail検索エラー: {e}")
                 username = "Error (権限不足)"
 
-        # Slack通知メッセージの作成（Configの差分情報 ＋ CloudTrailの犯人情報）
+        # Slack通知メッセージの作成（Configの差分情報 ＋ CloudTrailの操作者情報）
         message = "--------------------------------------------------\n"
         message += "⚠️ *【構成ドリフト検知】*\n"
-        message += f"*- 対象リソース:* `{resource_type}` (`{resource_id}`)\n"
+        message += f"*- 対象リソース:* `{resource_type}`\n"
+        message += f"*- 名称:* `{resource_name}`\n"
+        message += f"*- ID:* `{resource_id}`\n"
         message += f"*- 操作者:* `{username}`\n"
         message += f"*- 変更内容:* {parsed_diff_text}\n"
         message += "--------------------------------------------------\n"
