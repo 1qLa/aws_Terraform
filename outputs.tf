@@ -15,25 +15,28 @@ output "bastion_sg_id" {
 
 output "drift_sqs_queue_url" {
     description = "構成ドリフトのイベントを処理するSQSキューのURL"
-    value = aws_sqs_queue.drift_sqs_queue.id
+    value = aws_sqs_queue.drift_queue.url
 }
 
 output "rds_endpoint" {
     description = "RDSの接続エンドポイント"
-    value = aws_rds_cluster.aurora.endpoint
+    value = aws_db_instance.main.endpoint
 }
 
 output "database_name" {
     description = "データベース名"
     value = data.aws_ssm_parameter.database_name.value
+    sensitive = true # 実行時のターミナル画面にユーザー名が表示されないようにする
 }
 
 output "username" {
     description = "ユーザー名"
     value = data.aws_ssm_parameter.username.value
+    sensitive = true
 }
 
 output "password" {
     description = "パスワード"
     value = data.aws_ssm_parameter.password.name
+    sensitive = true
 }
