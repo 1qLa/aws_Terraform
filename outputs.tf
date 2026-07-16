@@ -26,17 +26,22 @@ output "rds_endpoint" {
 output "database_name" {
     description = "データベース名"
     value = data.aws_ssm_parameter.database_name.value
-    sensitive = true # 実行時のターミナル画面にユーザー名が表示されないようにする
+    sensitive = true # 実行時のターミナル画面にデータベース名が表示されないようにする
 }
 
 output "username" {
     description = "ユーザー名"
     value = data.aws_ssm_parameter.username.value
-    sensitive = true
+    sensitive = true # 実行時のターミナル画面にユーザー名が表示されないようにする
 }
 
 output "password" {
     description = "パスワード"
-    value = data.aws_ssm_parameter.password.name
-    sensitive = true
+    value = data.aws_ssm_parameter.password.value
+    sensitive = true # 実行時のターミナル画面にパスワードが表示されないようにする
+}
+
+output "bastion_instance_id" {
+    description = "踏み台サーバーのインスタンスID"
+    value = aws_instance.bastion.id
 }
