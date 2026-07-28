@@ -3,7 +3,7 @@ AWS上のインフラ構築において、手動操作による「構成ドリ�
 
 ## 📊 発表資料 (Presentation)
 本プロジェクトのシステム構築の背景や詳細な検証結果については、以下のスライドをご覧ください。
-* **[スライド資料はこちら](https://canva.link/gwnhaikvsf2rkdl)**
+* **[スライド資料はこちら](https://canva.link/nnh28ewd2jvgcx9)**
 
 ---
 
