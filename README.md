@@ -20,7 +20,7 @@ Terraformを用いたインフラ管理において課題となる「コード�
 ## アーキテクチャ構成
 AWSのサーバーレスアーキテクチャを活用し、スケーラブルかつ疎結合なイベント駆動型システムを構築しています。
 
-<img width="10323" height="7446" alt="Image" src="https://github.com/user-attachments/assets/57f63540-a614-47fd-ae99-5d8e0a13aa27" />
+<img width="10323" height="7446" alt="Image" src="https://github.com/user-attachments/assets/cb74f77f-9d94-4d16-a597-c2677bd63ba8" />
 
 1. **AWS CloudTrail**: AWS環境内でのAPI操作（手動変更）を監視・記録
 2. **Amazon EventBridge**: CloudTrailの記録から、特定のリソース変更（例：セキュリティグループのルール変更）イベントをフィルタリングして検知
