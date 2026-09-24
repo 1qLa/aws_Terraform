@@ -1,0 +1,291 @@
+<mxfile host="65bd71144e">
+    <diagram id="drift-notifier-mcp-extension" name="構成ドリフト検知 + 本人確認 + Claude Code調査">
+        <mxGraphModel dx="1054" dy="1015" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1320" pageHeight="1080" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" value="構成ドリフト検知システムの拡張（検知対象は検証用にSecurityGroupのみ）&#xa;既存: 検知 → Slack通知　／　新規: 本人確認（3LO Web）と Claude Code経由の調査（MCP）" style="text;html=0;align=left;verticalAlign=top;fontSize=16;fontStyle=1;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="20" width="1100" height="46" as="geometry"/>
+                </mxCell>
+                <mxCell id="zone-detect" value="検知（既存の流れを流用・Lambdaは改修）" style="rounded=1;arcSize=4;whiteSpace=wrap;html=0;fillColor=#ECEEF0;strokeColor=#8A97A3;dashed=1;dashPattern=8 4;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=16;spacingTop=8;fontSize=12;fontStyle=1;fontColor=#5A6B7A;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="90" width="780" height="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="zone-notify" value="通知の認証（webhookから置き換え）" style="rounded=1;arcSize=4;whiteSpace=wrap;html=0;fillColor=#FBEAD6;strokeColor=#8A5A17;dashed=1;dashPattern=8 4;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=16;spacingTop=8;fontSize=12;fontStyle=1;fontColor=#8A5A17;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="420" width="900" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="zone-ack" value="本人確認・承認（新規・3LO Web、職務分離）" style="rounded=1;arcSize=4;whiteSpace=wrap;html=0;fillColor=#E1EFE3;strokeColor=#2E6B3E;dashed=1;dashPattern=8 4;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=16;spacingTop=8;fontSize=12;fontStyle=1;fontColor=#2E6B3E;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="630" width="540" height="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="zone-investigate" value="調査（新規・Claude Code / MCP）" style="rounded=1;arcSize=4;whiteSpace=wrap;html=0;fillColor=#DCEBEE;strokeColor=#1F6F7A;dashed=1;dashPattern=8 4;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=16;spacingTop=8;fontSize=12;fontStyle=1;fontColor=#1F6F7A;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="630" width="590" height="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="config" value="AWS Config&#xa;（変更検知）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.config;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="150" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="eventbridge" value="EventBridge" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eventbridge;" parent="1" vertex="1">
+                    <mxGeometry x="220" y="150" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="sns" value="SNS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.simple_notification_service;" parent="1" vertex="1">
+                    <mxGeometry x="380" y="150" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="sqs" value="SQS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.simple_queue_service;" parent="1" vertex="1">
+                    <mxGeometry x="540" y="150" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="lambda-notify" value="Lambda&#xa;drift-handler（既存・改修）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#ED7100;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="150" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="cloudtrail" value="CloudTrail&#xa;（操作者を照会）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudtrail;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="300" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="cognito" value="Cognito&#xa;（1つのUser Pool／&#xa;グループ+Precedenceで役職を管理／&#xa;custom:iam_arnでIAMユーザーと紐付け）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#DD344C;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cognito;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="470" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="gateway" value="AgentCore Gateway&#xa;（notify Target /&#xa;investigate Target）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#01A88D;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="470" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="identity" value="AgentCore Identity&#xa;（Slack bot token）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#01A88D;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;" parent="1" vertex="1">
+                    <mxGeometry x="780" y="470" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="slack" value="Slack" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#5A6B86;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.internet_alt1;" parent="1" vertex="1">
+                    <mxGeometry x="1000" y="470" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="dynamodb" value="DynamoDB&#xa;drift-events&#xa;（検知内容・操作者・申告理由・承認者）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#3B48CC;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="850" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="apigw" value="API Gateway" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="700" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="lambda-ack" value="Lambda&#xa;申告(attest-handler)&#xa;iam_arn一致のみ許可" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#ED7100;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" parent="1" vertex="1">
+                    <mxGeometry x="220" y="700" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="lambda-approve" value="Lambda&#xa;承認(approve-handler)&#xa;Precedence上位のみ許可" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#ED7100;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+                    <mxGeometry x="400" y="700" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="claudecode" value="Claude Code&#xa;（開発者が操作）" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;fontStyle=1;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="740" y="695" width="180" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="lambda-investigate" value="Lambda&#xa;investigate（新規）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#ED7100;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" parent="1" vertex="1">
+                    <mxGeometry x="1000" y="700" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="awsapi" value="AWS API&#xa;（EC2/Config、直接照会）" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;fontStyle=1;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="1150" y="700" width="120" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="ea1" value="変更を検知" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10.5;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="1" source="config" target="eventbridge" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ea2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="1" source="eventbridge" target="sns" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ea3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="1" source="sns" target="sqs" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ea4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="1" source="sqs" target="lambda-notify" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ea5" value="① 誰の変更か照会" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="lambda-notify" target="cloudtrail" edge="1">
+                    <mxGeometry x="0.4444" y="1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="eb1" value="② 2LO: client credentialsでトークン取得" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#DD344C;strokeWidth=2;dashed=1;dashPattern=6 4;fontColor=#DD344C;fontSize=10.5;exitX=0.4;exitY=1;entryX=0.5;entryY=0;" parent="1" source="lambda-notify" target="cognito" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="eb2" value="③ トークン付きで通知Toolを呼ぶ" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10.5;exitX=0;exitY=0.9;entryX=0;entryY=0.5;" parent="1" source="lambda-notify" target="gateway" edge="1">
+                    <mxGeometry x="0.35" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="630" y="220"/>
+                            <mxPoint x="630" y="440"/>
+                            <mxPoint x="520" y="440"/>
+                            <mxPoint x="520" y="509"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="eb3" value="④ bot token取得" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#DD344C;strokeWidth=2;dashed=1;dashPattern=6 4;fontColor=#DD344C;fontSize=10.5;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="1" source="gateway" target="identity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="eb4" value="⑤ bot tokenでSlackへ通知投稿" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10.5;exitX=0.5;exitY=0;entryX=0.5;entryY=0;" parent="1" source="gateway" target="slack" edge="1">
+                    <mxGeometry x="0.3" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="599" y="455"/>
+                            <mxPoint x="1039" y="455"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="eb5" value="検知内容・操作者を記録" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10.5;exitX=0.5;exitY=1;entryX=0.3;entryY=0;" parent="1" source="lambda-notify" target="dynamodb" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="720" y="228"/>
+                            <mxPoint x="720" y="800"/>
+                            <mxPoint x="583" y="800"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="ec1" value="⑥ 本人／承認者が3LOログイン" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#DD344C;strokeWidth=2;dashed=1;dashPattern=6 4;fontColor=#DD344C;fontSize=10.5;exitX=0;exitY=0.7;entryX=0.6;entryY=1;" parent="1" source="slack" target="cognito" edge="1">
+                    <mxGeometry x="-0.0423" y="1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="ec2" value="認可コードでリダイレクト（ブラウザ経由）" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#DD344C;strokeWidth=2;dashed=1;dashPattern=6 4;fontColor=#DD344C;fontSize=10.5;exitX=0.3;exitY=1;entryX=0.5;entryY=0;" parent="1" source="cognito" target="apigw" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ec3" value="/attest" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10;exitX=1;exitY=0.35;entryX=0;entryY=0.5;" parent="1" source="apigw" target="lambda-ack" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ec3b" value="/approve" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10;exitX=1;exitY=0.75;entryX=0;entryY=0.5;" parent="1" source="apigw" target="lambda-approve" edge="1">
+                    <mxGeometry x="-0.1" relative="1" as="geometry"><Array as="points"><mxPoint x="175" y="758"/><mxPoint x="175" y="860"/><mxPoint x="370" y="860"/><mxPoint x="370" y="739"/></Array></mxGeometry>
+                </mxCell>
+                <mxCell id="ec4" value="⑦ 申告理由を記録" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10;exitX=0.5;exitY=0;entryX=0;entryY=0.4;" parent="1" source="lambda-ack" target="dynamodb" edge="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry"><Array as="points"><mxPoint x="259" y="685"/><mxPoint x="530" y="685"/><mxPoint x="530" y="881"/></Array></mxGeometry>
+                </mxCell>
+                <mxCell id="ec5" value="⑧ 承認者を記録" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10;exitX=1;exitY=0.6;entryX=0;entryY=0.7;" parent="1" source="lambda-approve" target="dynamodb" edge="1">
+                    <mxGeometry x="0.75" relative="1" as="geometry"><Array as="points"><mxPoint x="505" y="747"/><mxPoint x="505" y="905"/></Array></mxGeometry>
+                </mxCell>
+                <mxCell id="ed1" value="⑨ 開発者が3LOログイン" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#DD344C;strokeWidth=2;dashed=1;dashPattern=6 4;fontColor=#DD344C;fontSize=10.5;exitX=0.5;exitY=0;entryX=0.7;entryY=1;" parent="1" source="claudecode" target="cognito" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ed2" value="⑩ investigate Toolを呼ぶ" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10.5;exitX=0.7;exitY=0;entryX=0.5;entryY=1;" parent="1" source="claudecode" target="gateway" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ed3" value="ルーティング" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10.5;exitX=0.7;exitY=1;entryX=0.3;entryY=0;" parent="1" source="gateway" target="lambda-investigate" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1039" y="600"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="ed4" value="ドリフト履歴を取得" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10.5;exitX=0.3;exitY=1;entryX=1;entryY=0.4;" parent="1" source="lambda-investigate" target="dynamodb" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ed5" value="現在のSG設定を直接照会" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10.5;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="1" source="lambda-investigate" target="awsapi" edge="1">
+                    <mxGeometry x="-0.1111" y="19" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="legend-title" value="凡例" style="text;html=0;align=left;fontSize=11;fontStyle=1;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="960" width="60" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-data-line" value="" style="endArrow=none;html=0;strokeColor=#3B7A70;strokeWidth=2;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="30" y="990" as="sourcePoint"/>
+                        <mxPoint x="60" y="990" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="legend-data-text" value="データ経路（処理・ルーティング）" style="text;html=0;align=left;fontSize=11;fontColor=#3B7A70;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="978" width="260" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-auth-line" value="" style="endArrow=none;html=0;strokeColor=#DD344C;strokeWidth=2;dashed=1;dashPattern=6 4;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="30" y="1018" as="sourcePoint"/>
+                        <mxPoint x="60" y="1018" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="legend-auth-text" value="認証経路（2LO / 3LO、Cognito関連）" style="text;html=0;align=left;fontSize=11;fontColor=#DD344C;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="1006" width="320" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-note" value="灰色の箱 = AWS外のコンポーネント（Slack, Claude Code, 呼び出し先API）" style="text;html=0;align=left;fontSize=11;fontColor=#5A6B86;" parent="1" vertex="1">
+                    <mxGeometry x="458" y="978" width="500" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-precedence" value="CognitoグループのPrecedenceは数値が小さいほど上位（⑧の判定に使用）" style="text;html=0;align=left;fontSize=11;fontColor=#5A6B86;" parent="1" vertex="1">
+                    <mxGeometry x="458" y="1006" width="500" height="24" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="approval-iam-version" name="承認ロジックの代替案（IAM権限ベース）">
+        <mxGraphModel dx="979" dy="943" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1320" pageHeight="920" math="0" shadow="0">
+            <root>
+                <mxCell id="r0"/>
+                <mxCell id="r1" parent="r0"/>
+                <mxCell id="r-title" value="承認ロジックの代替案 — IAM権限の比較で判定する版&#xa;（Cognitoグループ+Precedenceの代わりに、IAM Policy Simulatorで「承認者自身がその変更を行える権限を持つか」を判定する）" style="text;html=0;align=left;verticalAlign=top;fontSize=16;fontStyle=1;fontColor=#232F3E;" parent="r1" vertex="1">
+                    <mxGeometry x="40" y="20" width="1200" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-zone-detect" value="検知（1ページ目と共通）" style="rounded=1;arcSize=4;whiteSpace=wrap;html=0;fillColor=#ECEEF0;strokeColor=#8A97A3;dashed=1;dashPattern=8 4;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=16;spacingTop=8;fontSize=12;fontStyle=1;fontColor=#5A6B7A;" parent="r1" vertex="1">
+                    <mxGeometry x="30" y="100" width="780" height="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-zone-approve" value="承認（新規・IAM権限ベース判定）" style="rounded=1;arcSize=4;whiteSpace=wrap;html=0;fillColor=#E9E3F2;strokeColor=#6B5A86;dashed=1;dashPattern=8 4;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=16;spacingTop=8;fontSize=12;fontStyle=1;fontColor=#6B5A86;" parent="r1" vertex="1">
+                    <mxGeometry x="30" y="410" width="1000" height="340" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-config" value="AWS Config&#xa;（変更検知）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.config;" parent="r1" vertex="1">
+                    <mxGeometry x="60" y="160" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-eventbridge" value="EventBridge" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eventbridge;" parent="r1" vertex="1">
+                    <mxGeometry x="220" y="160" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-sns" value="SNS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.simple_notification_service;" parent="r1" vertex="1">
+                    <mxGeometry x="380" y="160" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-sqs" value="SQS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.simple_queue_service;" parent="r1" vertex="1">
+                    <mxGeometry x="540" y="160" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-lambda-notify" value="Lambda&#xa;drift-handler（既存・改修）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#ED7100;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" parent="r1" vertex="1">
+                    <mxGeometry x="700" y="160" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-cloudtrail" value="CloudTrail&#xa;（操作者を照会）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudtrail;" parent="r1" vertex="1">
+                    <mxGeometry x="700" y="300" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-slack" value="Slack&#xa;承認リンク" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#5A6B86;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.internet_alt1;" parent="r1" vertex="1">
+                    <mxGeometry x="70" y="480" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-cognito" value="Cognito&#xa;（3LOログインのみ／グループ判定なし&#xa;custom:iam_arnで承認者のIAM ARNを渡す）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#DD344C;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cognito;" parent="r1" vertex="1">
+                    <mxGeometry x="230" y="480" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-apigw" value="API Gateway" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" parent="r1" vertex="1">
+                    <mxGeometry x="390" y="480" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-lambda-approve" value="Lambda&#xa;approve-handler（IAM版）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#ED7100;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" parent="r1" vertex="1">
+                    <mxGeometry x="550" y="480" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-iam" value="IAM&#xa;SimulatePrincipalPolicy&#xa;（承認者のIAM ARNで、同じアクションを&#xa;対象SGに実行できるか判定）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#DD344C;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.identity_and_access_management_iam;" parent="r1" vertex="1">
+                    <mxGeometry x="710" y="590" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-dynamodb" value="DynamoDB&#xa;drift-events&#xa;（検知内容・変更に必要なIAMアクション・承認結果）" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#3B48CC;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;" parent="r1" vertex="1">
+                    <mxGeometry x="890" y="480" width="78" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-ea1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="r1" source="r-config" target="r-eventbridge" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-ea2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="r1" source="r-eventbridge" target="r-sns" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-ea3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="r1" source="r-sns" target="r-sqs" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-ea4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="r1" source="r-sqs" target="r-lambda-notify" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-ea5" value="誰の変更か照会" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="r1" source="r-lambda-notify" target="r-cloudtrail" edge="1">
+                    <mxGeometry x="0.4444" y="1" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry>
+                </mxCell>
+                <mxCell id="r-ea6" value="検知内容・変更に必要なIAMアクションを記録&#xa;（例: ec2:AuthorizeSecurityGroupIngress）" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10;exitX=1;exitY=0.7;entryX=1;entryY=0.5;" parent="r1" source="r-lambda-notify" target="r-dynamodb" edge="1">
+                    <mxGeometry x="-0.2" relative="1" as="geometry"><Array as="points"><mxPoint x="1000" y="215"/><mxPoint x="1000" y="519"/></Array></mxGeometry>
+                </mxCell>
+                <mxCell id="r-eb1" value="① 承認リンクをクリック→3LOログイン" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#DD344C;strokeWidth=2;dashed=1;dashPattern=6 4;fontColor=#DD344C;fontSize=10;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="r1" source="r-slack" target="r-cognito" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-eb2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#DD344C;strokeWidth=2;dashed=1;dashPattern=6 4;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="r1" source="r-cognito" target="r-apigw" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-eb3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="r1" source="r-apigw" target="r-lambda-approve" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-eb4" value="② 変更に必要なIAMアクションを取得" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10;exitX=0.5;exitY=0;entryX=0.5;entryY=0;" parent="r1" source="r-lambda-approve" target="r-dynamodb" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="589" y="440"/>
+                            <mxPoint x="929" y="440"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="r-eb5" value="③ 承認者の権限を照会" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#DD344C;strokeWidth=2;dashed=1;dashPattern=6 4;fontColor=#DD344C;fontSize=10;exitX=1;exitY=0.9;entryX=0;entryY=0.5;startArrow=classic;endArrow=classic;" parent="r1" source="r-lambda-approve" target="r-iam" edge="1">
+                    <mxGeometry x="0.1" relative="1" as="geometry"><Array as="points"><mxPoint x="650" y="550"/><mxPoint x="650" y="629"/></Array></mxGeometry>
+                </mxCell>
+                <mxCell id="r-eb6" value="④ 判定結果に基づき承認を記録／却下" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#3B7A70;strokeWidth=2;fontColor=#3B7A70;fontSize=10;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="r1" source="r-lambda-approve" target="r-dynamodb" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r-callout" value="1ページ目との違い&#xa;Cognitoグループ+Precedenceは「役職という人間の序列」で判定する。&#xa;この版はIAMのSimulatePrincipalPolicy APIを使い、「承認者が実際にその権限を持っているか」という&#xa;権限の実質で判定する。役職に頼らず最小権限の考え方に忠実だが、ポリシー比較のロジックが必要になる分、実装は複雑になる。&#xa;承認者のIAM ARNは、1ページ目と同じくCognitoの属性 custom:iam_arn から取得する。" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FBEAD6;strokeColor=#8A5A17;fontColor=#6E4110;fontSize=12;align=left;verticalAlign=top;spacing=12;" parent="r1" vertex="1">
+                    <mxGeometry x="30" y="770" width="1000" height="110" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
