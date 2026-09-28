@@ -1,5 +1,6 @@
 # WAF Web ACL
 resource "aws_wafv2_web_acl" "main" {
+  count = var.enable_workload ? 1 : 0
   name        = "${var.prefix}-web-acl"
   description = "WAF Web ACL for ${var.prefix}"
   scope       = "REGIONAL" // ALBに使用する場合は REGIONAL を指定
@@ -65,6 +66,7 @@ resource "aws_wafv2_web_acl" "main" {
 
 # WAFをALBに関連付ける
 resource "aws_wafv2_web_acl_association" "main" {
-  resource_arn = aws_alb.main.arn
-  web_acl_arn  = aws_wafv2_web_acl.main.arn
+  count = var.enable_workload ? 1 : 0
+  resource_arn = aws_alb.main[0].arn
+  web_acl_arn  = aws_wafv2_web_acl.main[0].arn
 }

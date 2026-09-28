@@ -1,5 +1,6 @@
 # ALB
 resource "aws_alb" "main" {
+  count = var.enable_workload ? 1 : 0
   name               = "${var.prefix}-alb"
   internal           = false
   load_balancer_type = "application"
@@ -13,6 +14,7 @@ resource "aws_alb" "main" {
 
 # ターゲットグループ
 resource "aws_lb_target_group" "ecs_tg" {
+  count = var.enable_workload ? 1 : 0
   name        = "${var.prefix}-ecs-tg"
   port        = 80
   protocol    = "HTTP"
@@ -36,13 +38,14 @@ resource "aws_lb_target_group" "ecs_tg" {
 
 # リスナー
 resource "aws_alb_listener" "http" {
-  load_balancer_arn = aws_alb.main.arn
+  count = var.enable_workload ? 1 : 0
+  load_balancer_arn = aws_alb.main[0].arn
   port              = 80
   protocol          = "HTTP"
 
     # デフォルトアクションでターゲットグループに転送
     default_action {
         type             = "forward"
-        target_group_arn = aws_lb_target_group.ecs_tg.arn
+        target_group_arn = aws_lb_target_group.ecs_tg[0].arn
     }   
 }

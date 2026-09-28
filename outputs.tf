@@ -20,28 +20,28 @@ output "drift_sqs_queue_url" {
 
 output "rds_endpoint" {
     description = "RDSの接続エンドポイント"
-    value = aws_db_instance.main.endpoint
+    value = one(aws_db_instance.main[*].endpoint)
 }
 
 output "database_name" {
     description = "データベース名"
-    value = data.aws_ssm_parameter.database_name.value
+    value = one(data.aws_ssm_parameter.database_name[*].value)
     sensitive = true # 実行時のターミナル画面にデータベース名が表示されないようにする
 }
 
 output "username" {
     description = "ユーザー名"
-    value = data.aws_ssm_parameter.username.value
+    value = one(data.aws_ssm_parameter.username[*].value)
     sensitive = true # 実行時のターミナル画面にユーザー名が表示されないようにする
 }
 
 output "password" {
     description = "パスワード"
-    value = data.aws_ssm_parameter.password.value
+    value = one(data.aws_ssm_parameter.password[*].value)
     sensitive = true # 実行時のターミナル画面にパスワードが表示されないようにする
 }
 
 output "bastion_instance_id" {
     description = "踏み台サーバーのインスタンスID"
-    value = aws_instance.bastion.id
+    value = one(aws_instance.bastion[*].id)
 }

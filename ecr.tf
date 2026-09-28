@@ -1,5 +1,6 @@
 # ECR
 resource "aws_ecr_repository" "app_repo" {
+  count = var.enable_workload ? 1 : 0
   name = "${var.prefix}-app-repo"
 
   # イメージスキャン設定
