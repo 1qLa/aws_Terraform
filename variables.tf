@@ -16,3 +16,9 @@ variable "enable_workload" {
   type        = bool
   default     = false
 }
+
+variable "enable_config_recording" {
+  description = "AWS Configの記録を有効にするか。認証・認可の実装が終わるまでは停止しておく"
+  type        = bool
+  default     = false
+}

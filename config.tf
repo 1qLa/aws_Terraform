@@ -85,7 +85,7 @@ resource "aws_config_delivery_channel" "main" {
 # 録画の開始（ConfigがAWSリソースの変更を監視し始める）
 resource "aws_config_configuration_recorder_status" "main" {
   name       = aws_config_configuration_recorder.main.name
-  is_enabled = true # ここをtrueにすることで「有効化」される
+  is_enabled = var.enable_config_recording # trueで記録開始、falseで停止(検証の準備中は停止しておく)
 
   # パイプ（配信チャンネル）が繋がる前に電源を入れるとエラーになるため、順序を指定
   depends_on = [aws_config_delivery_channel.main]
