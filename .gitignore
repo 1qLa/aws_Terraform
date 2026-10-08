@@ -5,3 +5,6 @@
 *.tfvars
 *.zip
 lambda_function.zip
+
+# 個人用のタスクメモ
+task.md

@@ -176,10 +176,10 @@ resource "aws_cloudwatch_event_rule" "drift_rule" {
 
         # 監視対象のセキュリティグループのIDを指定
         resourceId   = [
-          "sg-0ae907c5511a2f1bd",
-          "sg-025c5cc37956439ef",
-          "sg-03ad3594a97fac821",
-          # "sg-07407cd5e5c4a550e",
+          aws_security_group.alb_sg.id,
+          aws_security_group.rds_sg.id,
+          aws_security_group.bastion_sg.id,
+          # aws_security_group.ecs_sg.id, # ECSは監視対象外
           ] 
       }
     }

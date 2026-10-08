@@ -45,3 +45,7 @@ output "bastion_instance_id" {
     description = "踏み台サーバーのインスタンスID"
     value = one(aws_instance.bastion[*].id)
 }
+output "drift_events_table_name" {
+    description = "構成ドリフトの台帳(DynamoDB)のテーブル名"
+    value = aws_dynamodb_table.drift_events.name
+}
