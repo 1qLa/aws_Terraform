@@ -26,6 +26,19 @@
 | Amazon Bedrock AgentCore Identity | https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/identity.html | AIエージェントと自動化されたワークロード向けの、IDと認証情報の管理サービス。エージェントが、ユーザーに代わってAWSや外部のサービスにアクセスするための認証・認可・認証情報の管理を提供する。 |
 | Model Context Protocol (MCP) | https://modelcontextprotocol.io/docs/getting-started/intro | AIアプリを外部のシステムにつなぐための、オープンソースの標準規格。 |
 
+## 認可の用語（OAuth・アクセストークン・2LO・3LO）
+
+確認日: 2026-11-12。用語解説③（13枚目）の出典。
+
+| 用語 | 出典URL | 公式の記述（要点） |
+|---|---|---|
+| OAuth 2.0 | https://datatracker.ietf.org/doc/html/rfc6749 （RFC 6749） | サードパーティのアプリが、HTTPサービスへの限定的なアクセスを得られるようにする認可のフレームワーク。アクセストークンは「保護されたリソースにアクセスするための認証情報」。 |
+| Authorization Code（3LO） | https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/common-use-cases.html | ユーザーの明示的な同意のもとで、エージェントがそのユーザー固有のデータにアクセスする。ユーザーが同意の画面に関わる。 |
+| Client Credentials（2LO） | 同上 | ユーザーの関与なしに、システム同士が直接認証する。エージェントが自分自身の認証情報で認証し、権限はエージェント単位で決まる。 |
+
+- 「2LO」「3LO」という呼び方は、上の公式ドキュメントには出てこない。2LO＝client credentials、3LO＝authorization code の通称として、スライドに載せた（メモにも「通称」と明記）。
+- 研究での使いどころ（②③＝2LO、⑥⑨＝3LO）は、`architecture/drift-notifier-mcp-extension.drawio` と Canva 16枚目「処理の流れ」の設計に基づく（未実装）。
+
 ## 載せなかった用語
 
 - Amazon S3（Terraformのstateの保存先）と Terraform は、構成図には出てくるが、スライドの密度を考えて外した。前期のスライドで Terraform は説明済み。
