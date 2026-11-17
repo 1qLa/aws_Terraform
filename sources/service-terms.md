@@ -43,3 +43,13 @@
 
 - Amazon S3（Terraformのstateの保存先）と Terraform は、構成図には出てくるが、スライドの密度を考えて外した。前期のスライドで Terraform は説明済み。
 - Slack と Claude Code は、AWSのサービスではないので外した。必要なら、各社の公式ドキュメントで確認してから足す。
+
+## 料金（コストの質問への回答用）
+
+確認日: 2026-11-16。米国東部（バージニア北部）の料金。東京リージョンの料金は取得できていない。
+
+| サービス | 出典URL | 記述（要点） |
+|---|---|---|
+| AWS Config | https://aws.amazon.com/config/pricing/ | 継続記録は1件 $0.003、定期記録は1件 $0.012。ルール評価は最初の10万件まで1件 $0.001。 |
+| AWS Lambda | https://aws.amazon.com/lambda/pricing/ | 無料枠は毎月100万リクエストと40万GB秒。超過分は100万リクエスト $0.20、1GB秒 $0.0000166667。 |
+| Amazon SQS | https://aws.amazon.com/sqs/pricing/ | 毎月100万リクエストまで無料。超過分の単価は取得できず。 |

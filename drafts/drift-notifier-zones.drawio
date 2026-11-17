@@ -197,7 +197,7 @@
                 <mxCell id="p2_e7" edge="1" parent="1" source="p2_person" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;startArrow=none;dashed=1;strokeColor=#DD344C;fontColor=#DD344C;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="p2_bapi">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="p2_l7" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontColor=#DD344C;" value="認可コードでリダイレクト" vertex="1">
+                <mxCell id="p2_l7" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontColor=#DD344C;" value="ログイン後に戻る" vertex="1">
                     <mxGeometry height="24" width="200" x="190" y="230" as="geometry"/>
                 </mxCell>
                 <mxCell id="p2_e8" edge="1" parent="1" source="p2_gw" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;startArrow=none;strokeColor=#545B64;fontColor=#545B64;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p2_binv">
@@ -270,7 +270,7 @@
                 <mxCell id="p3_e1" edge="1" parent="1" source="p3_person" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;startArrow=none;dashed=1;strokeColor=#DD344C;fontColor=#DD344C;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p3_api">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="p3_l1" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontColor=#DD344C;" value="認可コードでリダイレクト（ブラウザ経由）" vertex="1">
+                <mxCell id="p3_l1" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontColor=#DD344C;" value="ログイン後に戻る（リダイレクト）" vertex="1">
                     <mxGeometry height="24" width="328" x="209" y="315" as="geometry"/>
                 </mxCell>
                 <mxCell id="p3_e2" edge="1" parent="1" source="p3_api" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;startArrow=none;strokeColor=#545B64;fontColor=#545B64;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p3_att">
@@ -317,7 +317,7 @@
                 <mxCell id="p3_l5" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontColor=#545B64;" value="⑧ 承認者を記録" vertex="1">
                     <mxGeometry height="24" width="129.28" x="994" y="463" as="geometry"/>
                 </mxCell>
-                <mxCell id="p3_t0" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontColor=#232F3E;" value="申告できる人：ログインした人の custom:iam_arn が、CloudTrailの操作者ARNと一致するときだけ" vertex="1">
+                <mxCell id="p3_t0" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontColor=#232F3E;" value="申告できる人：ログインした人が、実際に変更した人と一致するときだけ" vertex="1">
                     <mxGeometry height="30.599999999999998" width="862.7600000000004" x="100" y="610" as="geometry"/>
                 </mxCell>
                 <mxCell id="p3_t1" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontColor=#232F3E;" value="承認できる人：申告者より権限が高いグループの人だけ。申告者本人は承認できない" vertex="1">
