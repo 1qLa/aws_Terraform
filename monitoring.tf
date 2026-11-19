@@ -122,6 +122,23 @@ resource "aws_iam_role_policy" "lambda_ec2_policy" {
   })
 }
 
+# Lambdaに台帳(DynamoDB)への書き込み権限を付与
+resource "aws_iam_role_policy" "lambda_dynamodb_policy" {
+  name = "lambda-dynamodb-put-policy"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["dynamodb:PutItem"] // 記録するだけなので、書き込みのみ許可
+        Resource = aws_dynamodb_table.drift_events.arn
+      },
+    ]
+  })
+}
+
 # Lambdaに必要なIAMポリシーをアタッチ
 resource "aws_iam_role_policy_attachment" "lambda_sqs" {
   role       = aws_iam_role.lambda_role.name
@@ -147,6 +164,7 @@ resource "aws_lambda_function" "drift_handler" {
   environment {
     variables = {
       SLACK_WEBHOOK_URL = var.SLACK_WEBHOOK_URL # 変数を参照する
+      DRIFT_TABLE_NAME  = aws_dynamodb_table.drift_events.name # 台帳のテーブル名
     }
   }
 }

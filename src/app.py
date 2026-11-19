@@ -1,11 +1,15 @@
 import json
 import os
 import urllib.request
+import uuid
 import boto3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # 環境変数からSlackのURLを取得
 slack_url = os.environ['SLACK_WEBHOOK_URL']
+
+# 台帳（DynamoDB）のテーブル名を環境変数から取得
+drift_table = boto3.resource('dynamodb').Table(os.environ['DRIFT_TABLE_NAME'])
 
 # CloudTrailを検索するためのクライアントを準備
 cloudtrail = boto3.client('cloudtrail')
@@ -117,6 +121,7 @@ def lambda_handler(event, context):
 
         # CloudTrailへの検索
         username = "Unknown User"
+        operator_arn = "Unknown"  # 申告のとき、ログインした人と突き合わせるIAMのARN
 
         if event_time_str and resource_id != 'Unknown':
             try:
@@ -135,10 +140,32 @@ def lambda_handler(event, context):
                 if events:
                     # 履歴が見つかったら、ユーザー名を抽出
                     username = events[0].get('Username', 'Unknown')
+                    # CloudTrailの生のイベントから、操作者のARNを取り出す
+                    ct_event = json.loads(events[0].get('CloudTrailEvent', '{}'))
+                    operator_arn = ct_event.get('userIdentity', {}).get('arn', 'Unknown')
                     
             except Exception as e:
                 print(f"CloudTrail検索エラー: {e}")
                 username = "Error (権限不足)"
+
+        # 台帳（DynamoDB）に検知内容と操作者を記録する
+        # 記録に失敗しても、Slack通知は止めない（失敗するとSQSが再配信し、通知が重複するため）
+        event_id = str(uuid.uuid4())
+        detected_at = event_time_str or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        try:
+            drift_table.put_item(Item={
+                'event_id': event_id,           # ドリフト1件ごとのID
+                'resource_id': resource_id,     # 変更されたSGのID（GSIのキー）
+                'detected_at': detected_at,     # 検知日時（GSIのキー）
+                'resource_type': resource_type,
+                'resource_name': resource_name,
+                'operator': username,           # CloudTrail上のユーザー名
+                'operator_arn': operator_arn,   # CloudTrail上の操作者ARN
+                'diff': parsed_diff_text,       # 変更内容
+                'status': 'DETECTED'            # 検知済み（申告・承認はこれから）
+            })
+        except Exception as e:
+            print(f"台帳への記録エラー: {e}")
 
         # Slack通知メッセージの作成（Configの差分情報 ＋ CloudTrailの操作者情報）
         message = "--------------------------------------------------\n"

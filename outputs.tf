@@ -49,3 +49,11 @@ output "drift_events_table_name" {
     description = "構成ドリフトの台帳(DynamoDB)のテーブル名"
     value = aws_dynamodb_table.drift_events.name
 }
+output "cognito_user_pool_id" {
+    description = "Cognito User PoolのID"
+    value = aws_cognito_user_pool.main.id
+}
+output "api_base_url" {
+    description = "申告・承認APIのURL（末尾に /attest/{event_id} または /approve/{event_id}）"
+    value = aws_api_gateway_stage.v1.invoke_url
+}

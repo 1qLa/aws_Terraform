@@ -88,9 +88,18 @@
 
 - 中間発表（2026-11-16、続き）：「会社の例で考える」と「2LOと3LOの違い」を、末尾（23・24枚目）に移した（削除は本人）。残る10枚のスライドから、2LO・3LOの表記を外した（処理の流れの②「トークンを取得」、⑥⑨「ログイン」、検証手順の「変更者がログインし、理由を申告する」）。本人が3枚目に「検証結果」を入れていたので、発表用は1〜10枚目＝表紙／前期の目的／検証結果／前期で残った課題／後期の目的／処理の流れ／検証手順／実装状況／今後の計画／終わり。11〜24枚目は本人が削除する。
 
+- 実装（2026-11-19）：`cognito.tf` を追加した（User Pool、`custom:iam_arn`、グループ leads=10・developers=20、ドメイン、スコープ `drift-gateway/notify`、アプリクライアント3つ）。解説図は `drafts/cognito-overview.drawio`。plan は「9追加・2削除」で想定どおり。apply では DynamoDB のテーブルだけ作成済み。Cognito の作成（`CreateUserPool`）と、踏み台IAMの削除（`RemoveRoleFromInstanceProfile`）は権限不足で止まり、管理者に権限付与を依頼した（返事待ち）。
+- 実装（2026-11-19）：drift-handler（`src/app.py`）が、検知内容と操作者ARNを DynamoDB に記録するようにした。Lambdaに `dynamodb:PutItem` の権限と環境変数 `DRIFT_TABLE_NAME` を追加（`monitoring.tf`）。記録に失敗しても Slack 通知は止めない（SQS の再配信で通知が重複するため）。まだ apply していない。
+
+- 実装（2026-11-19）：申告と承認の判定ロジックを `api/handlers.py` に書いた（`attest_handler`、`approve_handler`）。単体テスト9件（`api/test_handlers.py`）が通る。申告は「ログインした人の iam_arn ＝ CloudTrail の操作者ARN」のときだけ、承認は「申告者より Precedence が小さく、本人でない」ときだけ記録する。状態は DETECTED → ATTESTED → APPROVED。同時に2回押されても、先の1件だけが通る（条件付き更新）。API Gateway・Lambda の Terraform は未作成。
+
+- 実装（2026-11-19）：申告・承認API の Terraform を `api.tf` に書いた。REST API（Cognito オーソライザー）で、`POST /attest/{event_id}` と `POST /approve/{event_id}`。Lambda 2つ（`kane-attest-handler`、`kane-approve-handler`）は、台帳の `GetItem` と `UpdateItem` だけを許可。`GROUP_PRECEDENCE` は Cognito のグループ定義から環境変数で渡す。`terraform plan` は「34追加・1変更・2削除」（1変更は drift-handler のコードと環境変数）。まだ apply していない。
+
 ## 次にやること
 
-- 発表前に、声に出して通しで1回練習し、時間と言いにくい箇所を確認する。
+- 管理者から権限が付いたら、`terraform apply` で Cognito を作成し、踏み台IAMを削除する。
+- `src/app.py` の改修を apply し、DynamoDB に記録されることを確認する（Config の再開が必要）。
+- 資料周りの作業は、実装を優先して後回しにする（本人の方針）。
 - 11/16までに Cognito などに着手したら、19・20枚目に反映する（19枚目は task.md の10月8日時点の状況に基づく）。
 - 章扉（02・03）と目次の言葉を直すかどうかは、本人の判断（直さない方針）。
 - `drafts/drift-notifier-zones.drawio` は、確認できたら `published/` に移す。
