@@ -95,9 +95,11 @@
 
 - 実装（2026-11-19）：申告・承認API の Terraform を `api.tf` に書いた。REST API（Cognito オーソライザー）で、`POST /attest/{event_id}` と `POST /approve/{event_id}`。Lambda 2つ（`kane-attest-handler`、`kane-approve-handler`）は、台帳の `GetItem` と `UpdateItem` だけを許可。`GROUP_PRECEDENCE` は Cognito のグループ定義から環境変数で渡す。`terraform plan` は「34追加・1変更・2削除」（1変更は drift-handler のコードと環境変数）。まだ apply していない。
 
+- 実装（2026-11-20）：管理者に権限を付けてもらい、apply した。Cognito（User Pool、グループ、クライアント3つ、テストユーザー3人）、申告・承認Lambda 2つ、IAMロール、drift-handlerの更新は成功し、踏み台IAMも削除された。API Gateway だけ `apigateway:POST` の権限不足で作成できていない。残りの plan は「14追加・3変更・0削除」（3変更は、テストユーザーの `custom:iam_arn` が毎回差分に見えるだけで、AWS側の値は正しい）。Config は停止のまま。月曜に管理者の先生に直接、API Gateway の権限（GET・POST・PUT・PATCH・DELETE、`arn:aws:apigateway:ap-northeast-1::/*`）を頼む。
+
 ## 次にやること
 
-- 管理者から権限が付いたら、`terraform apply` で Cognito を作成し、踏み台IAMを削除する。
+- 月曜に、API Gateway の権限を管理者に頼む。付いたら `terraform apply` で、API Gateway の残りを作成する。
 - `src/app.py` の改修を apply し、DynamoDB に記録されることを確認する（Config の再開が必要）。
 - 資料周りの作業は、実装を優先して後回しにする（本人の方針）。
 - 11/16までに Cognito などに着手したら、19・20枚目に反映する（19枚目は task.md の10月8日時点の状況に基づく）。
