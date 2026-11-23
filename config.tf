@@ -66,10 +66,11 @@ resource "aws_config_configuration_recorder" "main" {
   name     = "kane-config-recorder"
   role_arn = aws_iam_role.config_role.arn
 
-  # 全てのリソースを監視対象にする設定
+  # セキュリティグループだけを記録する(検知対象がSGだけで、全リソースの記録は費用がかかるため)
   recording_group {
-    all_supported                 = true
-    include_global_resource_types = true
+    all_supported                 = false
+    include_global_resource_types = false
+    resource_types                = ["AWS::EC2::SecurityGroup"]
   }
 }
 

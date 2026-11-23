@@ -41,6 +41,14 @@ def get_port_name(port_num):
     except (ValueError, TypeError):
         return str(port_num)
     
+def normalize_port(port):
+    # 22.0 → 22。数値にできないもの(All など)は、そのまま返す
+    try:
+        return int(float(port))
+    except (ValueError, TypeError):
+        return port
+
+
 def get_sg_name(sg_id):
     # セキュリティグループIDから、そのSGの名前(GroupName)を取得する関数
     try:
@@ -69,8 +77,9 @@ def parse_sg_diff(diff_data):
             
             # ルールの詳細を抽出
             if isinstance(target_data, dict):
-                from_port = target_data.get('fromPort', 'All')
-                to_port = target_data.get('toPort', 'All')
+                # Configはポート番号を 22.0 のような小数で返すことがあるため、整数に直す
+                from_port = normalize_port(target_data.get('fromPort', 'All'))
+                to_port = normalize_port(target_data.get('toPort', 'All'))
                 protocol = target_data.get('ipProtocol', 'All')
                 
                 # ここで関数を呼び出して、ポート番号を名前に変換

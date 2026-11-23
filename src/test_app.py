@@ -76,5 +76,22 @@ class HandlerTest(unittest.TestCase):
             app.lambda_handler(sqs_event(), None)
 
 
+class DiffTest(unittest.TestCase):
+    def test_ポート番号は小数ではなく整数で表示する(self):
+        diff = {'changedProperties': {'Configuration.IpPermissions.0': {
+            'changeType': 'CREATE',
+            'updatedValue': {'fromPort': 22.0, 'toPort': 22.0, 'ipProtocol': 'tcp',
+                             'ipv4Ranges': [{'cidrIp': '0.0.0.0/0'}]}}}}
+        text = app.parse_sg_diff(diff)
+        self.assertIn('SSH (ポート:22)', text)
+        self.assertNotIn('22.0', text)
+
+    def test_範囲指定も整数で表示する(self):
+        diff = {'changedProperties': {'Configuration.IpPermissions.0': {
+            'changeType': 'CREATE',
+            'updatedValue': {'fromPort': 8000.0, 'toPort': 9000.0, 'ipProtocol': 'tcp', 'ipv4Ranges': []}}}}
+        self.assertIn('ポート:8000〜9000', app.parse_sg_diff(diff))
+
+
 if __name__ == '__main__':
     unittest.main()
