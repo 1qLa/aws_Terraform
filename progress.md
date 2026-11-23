@@ -97,6 +97,10 @@
 
 - 実装（2026-11-20）：管理者に権限を付けてもらい、apply した。Cognito（User Pool、グループ、クライアント3つ、テストユーザー3人）、申告・承認Lambda 2つ、IAMロール、drift-handlerの更新は成功し、踏み台IAMも削除された。API Gateway だけ `apigateway:POST` の権限不足で作成できていない。残りの plan は「14追加・3変更・0削除」（3変更は、テストユーザーの `custom:iam_arn` が毎回差分に見えるだけで、AWS側の値は正しい）。Config は停止のまま。月曜に管理者の先生に直接、API Gateway の権限（GET・POST・PUT・PATCH・DELETE、`arn:aws:apigateway:ap-northeast-1::/*`）を頼む。
 
+- 実装（2026-11-23）：調査Lambdaを書いた（`api/investigate.py`、テスト `api/test_investigate.py`、Terraform は `investigate.tf`）。入力は `resource_id`（SGのID）と `limit`（既定10、最大50）。台帳のインデックスから履歴を新しい順に返し、EC2のAPIで現在のSGの設定も返す。SGが削除済みなら現在の設定は None。IAMは、台帳の `Query`（インデックスのみ）と `ec2:DescribeSecurityGroups` だけ（読み取り専用）。単体テストは全部で17件が通る。plan は「18追加・5変更・0削除」（変更が増えた2件は、申告・承認Lambdaのコードのハッシュが、同じzipに調査コードが入ったため変わっただけ）。まだ apply していない。
+- 未決（調査）：「権限のない人は調査で拒否される」を、どこで判定するかが決まっていない。AgentCore Gateway が、Lambda にログインした人の情報を渡すかは、公式ドキュメントで未確認。Gateway の入口の認可（トークンのスコープやグループ）で止めるのか、Lambda 側で判定するのかを、AgentCore の権限が付いてから確認する。
+- 実装（2026-11-23）：AWSプロバイダーを v6 に上げても問題ないかを、コピーで確認した。v6.73.0 で validate は成功、plan は v5 と同じ差分。AgentCore のリソース（Gateway、Gateway Target、API key / OAuth2 credential provider など）が使える。公式: https://registry.terraform.io/providers/hashicorp/awS/latest/docs/guides/version-6-upgrade 、https://github.com/hashicorp/terraform-provider-aws/issues/43424 （確認日 2026-11-23）。上げるのは、API Gateway の apply が終わったあとにする。
+
 ## 次にやること
 
 - 月曜に、API Gateway の権限を管理者に頼む。付いたら `terraform apply` で、API Gateway の残りを作成する。
