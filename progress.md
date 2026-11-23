@@ -138,6 +138,9 @@
 
 - 実装（2026-11-23）：申告・承認の画面（フロントエンド）を作った（まだ apply していない）。画面は、API Gateway + Lambda から配信する（S3・CloudFront は使わない。追加の権限が要らず、同じ場所なので CORS も不要）。`GET /ui`（画面。ログイン前でも開ける）、`GET /events/{event_id}`（内容の表示。leads と developers の人だけ）を追加した。ログインは Cognito のログイン画面（Authorization Code + PKCE、既存の `kane-web` クライアント）。画面は、通知のリンク（`/ui?event=<ID>`）から開き、内容を表示して、申告（理由を入力）と承認のボタンを出す。Slack の通知には、実際に開けるリンクを載せた。安全面：外から来た文字は `textContent` だけで入れる（HTMLとして解釈する書き方は、テストで禁止）、CSP（外への通信は自分とCognitoだけ、nonce 付き）、`Referrer-Policy: no-referrer`、トークンは `sessionStorage`（タブを閉じると消える）。コード：`api/web/index.html`、`api/ui.py`、`api/handlers.py` の `get_event_handler`、Terraform は `ui.tf`。単体テストは api が 33 件、src が 13 件。確認スクリプトは `drafts/test_ui.py`。
 
+- 画面の修正（2026-11-23）：①ログインで `profile` スコープを要求するようにした（`openid email` だけだと、ID トークンに `custom:iam_arn` が入らず、申告で「ログイン情報に iam_arn がありません」と出た。公式: https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-define-resource-servers.html 、確認日 2026-11-23）。②ボタンを出す条件を、サーバーの判定に任せた（内容の API が、ログインした人が、この1件にできる操作と、できない理由を返す。承認 API と同じ判定を共通で使う）。申告者本人には、承認のボタンを出さず、入力した理由と「あなたが申告しました」を表示する。③「← 一覧に戻る」ボタン、最近の検知の一覧（`GET /events`、新しい順で最大50件、台帳の全体を読んで並べ替える）、ブラウザの「戻る」への対応を追加した。単体テストは api が 47 件、src が 13 件。
+- 動作確認（2026-11-23）：画面のログインの流れ（Cognito のログイン画面、PKCE、トークン取得）を、ブラウザを使わず、私の側で再現して確認した。田中（申告者）は承認不可、佐藤（同じ権限）は承認不可、鈴木（上位）は承認可、guest は一覧も内容も 403。ブラウザでは、申告まで成功した。
+
 ## 次にやること
 
 - AgentCore を Terraform で書く（Gateway、通知Tool、調査Tool、Slack の bot token）。
