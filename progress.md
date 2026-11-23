@@ -125,6 +125,12 @@
 - 通しの動作確認（2026-11-23）：Config を SG だけの記録に絞って再開し、`kane-bastion-sg` に SSH(22) を `0.0.0.0/0` で追加して、検知から調査まで、実際の変更で確認した。約1分で Config が検知し、台帳に記録され（操作者の ARN は、変更した IAM ユーザーと一致）、Gateway 経由で Slack に通知された。申告は、本人以外が403・本人が200、承認は、申告者本人と同じ権限が403・上位が200。調査 Tool は、申告から承認までの履歴と、現在の設定を返した。確認後、追加したルールを削除し（これも検知された）、Config を停止した。台帳には、追加（承認済み）と削除（未申告）の2件が残っている。
 - 直した点（2026-11-23）：変更内容の表示が「ポート:22.0」になる不具合を、整数に直した（`normalize_port`）。Config の記録対象を、すべてのリソースから SG だけに絞った（`config.tf`。費用を抑えるため）。
 
+- 実装（2026-11-23）：Claude Code から Gateway に接続した。`claude mcp add --transport http --scope local --client-id <claude_code のクライアントID> --callback-port 8080 kane-drift <Gateway の URL>`（このPCだけの設定）。ログインは、対話モードの `/mcp` から、Cognito のログイン画面で行う（3LO）。Gateway は、`/.well-known/oauth-protected-resource` で、認可サーバー（Cognito）を案内し、Cognito は PKCE(S256) に対応している。Cognito は動的なクライアント登録（DCR）に対応しないため、登録済みのクライアントIDを渡した。公式: https://code.claude.com/docs/en/mcp （確認日 2026-11-23）。接続できた。
+
+- 決まったこと（2026-11-23）：調査 Tool を使えるのは、leads と developers のグループの人で、グループなしは入口で拒否する。通知（2LO、drift-handler）と調査（3LO、人）の Gateway を分けた。drift-handler のトークンにはグループの情報がなく、同じ Gateway に条件を付けると、通知が拒否されるため。調査用 Gateway（`kane-investigate-gateway`）は、Claude Code のクライアントだけを許可し、トークンの `cognito:groups` に `leads` か `developers` が入っているときだけ通す（`CONTAINS_ANY`）。通知用 Gateway（`kane-drift-gateway`）は、drift-handler（2LO）のクライアントだけを許可する。
+- 動作確認（2026-11-23）：`drafts/test_investigate_access.py` で、7件すべて期待どおり（OK 7 / NG 0）。田中・佐藤（developers）と鈴木・山田（leads）は調査できる。グループなしの guest は403で拒否される。drift-handler（2LO）は調査Toolを呼べず、人のトークンは通知用Gatewayに入れない。`cognito:groups` が、アクセストークンの中で、想定した形で入っていることも確認できた。グループなしのテストユーザー `guest` を追加した（tfvars）。
+- Claude Code の登録を、調査用 Gateway の URL に付け替えた（`kane-investigate`）。ログインは、`/mcp` から行う。動作確認用に、テスト専用のクライアント（`kane-test-cli`）を、調査用 Gateway の許可クライアントに入れている。確認が終わったら外す。
+
 ## 次にやること
 
 - AgentCore を Terraform で書く（Gateway、通知Tool、調査Tool、Slack の bot token）。

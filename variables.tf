@@ -44,9 +44,9 @@ variable "claude_code_callback_urls" {
 variable "test_users" {
   description = "検証用のテストユーザー。キーはユーザーの識別名（tanaka など）。値は terraform.tfvars に書く（git の管理対象外）"
   type = map(object({
-    email   = string # ログインID（実在しなくてもよい）
-    group   = string # 所属グループ（leads または developers）
-    iam_arn = string # 本人のIAMのARN。CloudTrailの操作者と突き合わせる
+    email   = string           # ログインID（実在しなくてもよい）
+    group   = optional(string) # 所属グループ（leads または developers）。省略すると、どのグループにも入らない
+    iam_arn = string           # 本人のIAMのARN。CloudTrailの操作者と突き合わせる
   }))
   default = {}
 }

@@ -126,7 +126,7 @@ resource "aws_cognito_user" "test" {
 
 # ユーザーをグループに入れる（グループで権限の上下が決まる）
 resource "aws_cognito_user_in_group" "test" {
-  for_each = var.test_users
+  for_each = { for name, user in var.test_users : name => user if user.group != null }
 
   user_pool_id = aws_cognito_user_pool.main.id
   group_name   = each.value.group

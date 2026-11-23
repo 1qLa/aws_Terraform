@@ -48,19 +48,51 @@ resource "aws_iam_role_policy" "gateway_invoke_investigate" {
 # ---------------------------------------------------------------
 resource "aws_bedrockagentcore_gateway" "main" {
   name          = "${var.prefix}-drift-gateway"
-  description   = "構成ドリフトの通知と調査のTool"
+  description   = "構成ドリフトの通知Tool（drift-handler専用）"
   role_arn      = aws_iam_role.gateway_role.arn
   protocol_type = "MCP"
 
-  # 入口の認可: Cognitoでログインしたアプリ・人だけが呼べる
+  # 入口の認可: drift-handler(2LO)だけが呼べる。人のログインでは呼べない
+  authorizer_type = "CUSTOM_JWT"
+  authorizer_configuration {
+    custom_jwt_authorizer {
+      discovery_url   = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.main.id}/.well-known/openid-configuration"
+      allowed_clients = [aws_cognito_user_pool_client.drift_handler.id]
+    }
+  }
+}
+
+# 調査用のGateway: Claude Code(3LO)でログインした人のうち、leads か developers のグループの人だけが呼べる。
+# 通知用とは分ける。drift-handlerのトークンにはグループの情報がなく、同じGatewayに条件を付けると、通知が拒否されるため
+resource "aws_bedrockagentcore_gateway" "investigate" {
+  name          = "${var.prefix}-investigate-gateway"
+  description   = "構成ドリフトの調査Tool（ログインした人専用）"
+  role_arn      = aws_iam_role.gateway_role.arn
+  protocol_type = "MCP"
+
   authorizer_type = "CUSTOM_JWT"
   authorizer_configuration {
     custom_jwt_authorizer {
       discovery_url = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.main.id}/.well-known/openid-configuration"
       allowed_clients = [
-        aws_cognito_user_pool_client.drift_handler.id, // 2LO: drift-handlerが通知Toolを呼ぶ
-        aws_cognito_user_pool_client.claude_code.id,   // 3LO: Claude Codeが調査Toolを呼ぶ
+        aws_cognito_user_pool_client.claude_code.id, // Claude Code(3LO)
+        aws_cognito_user_pool_client.test_cli.id,    // 動作確認用(テスト専用。確認が終わったら外す)
       ]
+
+      # トークンの cognito:groups に、許可するグループのどれかが入っているときだけ通す
+      custom_claim {
+        inbound_token_claim_name       = "cognito:groups"
+        inbound_token_claim_value_type = "STRING_ARRAY"
+        authorizing_claim_match_value {
+          claim_match_operator = "CONTAINS_ANY"
+          claim_match_value {
+            match_value_string_list = [
+              aws_cognito_user_group.leads.name,
+              aws_cognito_user_group.developers.name,
+            ]
+          }
+        }
+      }
     }
   }
 }
@@ -69,7 +101,7 @@ resource "aws_bedrockagentcore_gateway" "main" {
 # 調査Tool: 台帳の履歴と、いまのSGの設定を返す(調査Lambdaを呼ぶ)
 # ---------------------------------------------------------------
 resource "aws_bedrockagentcore_gateway_target" "investigate" {
-  gateway_identifier = aws_bedrockagentcore_gateway.main.gateway_id
+  gateway_identifier = aws_bedrockagentcore_gateway.investigate.gateway_id
   name               = "investigate"
   description        = "セキュリティグループのドリフト履歴と、現在の設定を調べる"
 
@@ -115,7 +147,7 @@ resource "aws_lambda_permission" "gateway_investigate" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.investigate.function_name
   principal     = "bedrock-agentcore.amazonaws.com"
-  source_arn    = aws_bedrockagentcore_gateway.main.gateway_arn
+  source_arn    = aws_bedrockagentcore_gateway.investigate.gateway_arn
 }
 
 # ---------------------------------------------------------------
