@@ -134,6 +134,8 @@
 
 - 片付け（2026-11-23）：動作確認用の Cognito クライアント（`kane-test-cli`）を、変数 `enable_test_client`（既定 false）が true のときだけ作る形にした。パスワードで直接トークンを取れる弱い認証方式のため。確認スクリプト（`drafts/test_api.sh`、`drafts/test_investigate_access.py`）を実行するときは、tfvars に `enable_test_client = true` を書いて apply し、終わったら false に戻す。調査用 Gateway の許可クライアントからも、同時に外れる。台帳は、Config 再開直後の初回の記録（変更内容も操作者もない2件、`kane-rds-sg` と `kane-alb-sg`）を削除し、`kane-bastion-sg` の追加（承認済み）と削除（未申告）の2件を、検証の記録として残した。Slack の「通知」チャンネルには、確認用の通知が数件残っている（手動で削除する）。
 
+- 図の更新（2026-11-23）：`drafts/drift-notifier-zones.drawio`（領域別の4ページ）を、実装に合わせて直した。元の設計図（`architecture/`）は、設計の記録として変えていない（本人の選択）。検知：クライアントシークレットを取得する Secrets Manager を追加（図形1つ、線1本、文字1つ）、Gateway を「通知用」に。認証：Gateway を「通知用」（drift-handler）と「調査用」（Claude Code）の2つに分け、調査用の入口の条件（leads / developers のグループの人だけ）を注記。Claude Code の線と Lambda investigate の線は、調査用 Gateway に付け替えた。本人確認・承認：最上位のグループの例外（同じ最上位の別の人も承認できる）を追加し、「Slackのリンクから」を「Slackの通知を見て」に。調査：Gateway を「調査用」に、「AWS API（EC2 / Config）」を「EC2 API」に、入口の条件の注記を追加。draw.io で開いた見た目は未確認（座標の重なりは、スクリプトで検査し、新しい要素どうしの重なりと、線の横切りがないことを確認した）。draw.io で開いて確認し、PNG を書き出して、Canva の図を差し替える必要がある。
+
 ## 次にやること
 
 - AgentCore を Terraform で書く（Gateway、通知Tool、調査Tool、Slack の bot token）。
