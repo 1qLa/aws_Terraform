@@ -23,10 +23,16 @@ resource "aws_dynamodb_table" "drift_events" {
 
   # 調査用のインデックス: SG IDごとの履歴を検知日時の順に取得する（investigate Lambdaが使う）
   global_secondary_index {
-    name            = "resource_id-detected_at-index" // インデックス名
-    hash_key        = "resource_id"                   // SG IDで絞り込む
-    range_key       = "detected_at"                   // 同じSGの中では検知日時で並べる
-    projection_type = "ALL"                           // 元のテーブルの全項目をインデックスからも読めるようにする
+    name = "resource_id-detected_at-index" // インデックス名
+    key_schema {
+      attribute_name = "resource_id" // SG IDで絞り込む
+      key_type       = "HASH"
+    }
+    key_schema {
+      attribute_name = "detected_at" // 同じSGの中では検知日時で並べる
+      key_type       = "RANGE"
+    }
+    projection_type = "ALL" // 元のテーブルの全項目をインデックスからも読めるようにする
   }
 
   tags = {

@@ -107,9 +107,11 @@
 
 - 決まったこと（2026-11-23）：最上位のグループの人が申告したときは、承認できる人がいなくなるため、最上位に限り、同じ最上位の別の人も承認できるようにした（本人は不可）。ルールは「承認者の Precedence が申告者より小さい」または「申告者も承認者も最上位（数値が最小のグループ）で、本人でない」。最上位が1人だけのときは承認できる人がいないので、最上位には2人以上を置く運用が前提。`api/handlers.py` の `can_approve` に実装し、単体テストを4件足した（全21件が通る）。テストユーザーに山田（leads の2人目）を追加し、`drafts/test_api.sh` に最上位のシナリオ4件を足した。apply して、実環境でも確認した（`drafts/test_api.sh` の13件がすべて OK）。
 
+- 実装（2026-11-23）：AWSプロバイダーを v5.100.0 から v6.73.0 に上げた（`providers.tf` を `~> 6.0`、`terraform init -upgrade`。archive プロバイダーも 2.8.0 から 2.8.1）。`terraform plan` は「No changes」で、AWS側の変更はなし。警告は、DynamoDB のインデックス（GSI）の `hash_key`・`range_key` が非推奨になったことだけ（テーブル本体は非推奨ではない）。インデックスの中を `key_schema` に書き換えた。コピーで確認したとおり、plan は「No changes」で、テーブルの作り直しはない。
+
 ## 次にやること
 
-- AWSプロバイダーを v6 に上げ、AgentCore を Terraform で書く（Gateway、通知Tool、調査Tool、Slack の bot token）。
+- AgentCore を Terraform で書く（Gateway、通知Tool、調査Tool、Slack の bot token）。
 - `src/app.py` の改修を apply し、DynamoDB に記録されることを確認する（Config の再開が必要）。
 - 資料周りの作業は、実装を優先して後回しにする（本人の方針）。
 - 11/16までに Cognito などに着手したら、19・20枚目に反映する（19枚目は task.md の10月8日時点の状況に基づく）。
