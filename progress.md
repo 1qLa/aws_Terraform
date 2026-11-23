@@ -109,6 +109,13 @@
 
 - 実装（2026-11-23）：AWSプロバイダーを v5.100.0 から v6.73.0 に上げた（`providers.tf` を `~> 6.0`、`terraform init -upgrade`。archive プロバイダーも 2.8.0 から 2.8.1）。`terraform plan` は「No changes」で、AWS側の変更はなし。警告は、DynamoDB のインデックス（GSI）の `hash_key`・`range_key` が非推奨になったことだけ（テーブル本体は非推奨ではない）。インデックスの中を `key_schema` に書き換えた。コピーで確認したとおり、plan は「No changes」で、テーブルの作り直しはない。
 
+- 実装（2026-11-23）：AgentCore の Terraform を `agentcore.tf` に書いた。Gateway（MCP、入口の認可は Cognito の CUSTOM_JWT。許可するクライアントは drift-handler の 2LO と Claude Code の 3LO）、Gateway のサービスロール（調査Lambdaを呼ぶ権限だけ）、調査Tool（調査Lambdaを呼ぶ。入力は `resource_id` と `limit`）。apply して作成済み（apply は、作成直後のロールの反映待ちで1回失敗し、再実行で通った）。
+- 実装（2026-11-23）：Slack の通知（bot token の登録＋通知Tool）は、変数 `enable_slack_notify`（既定 false）が true のときだけ作る。有効にすると plan は「8追加」。token の登録は write-only（`api_key_wo`）で、state に残らない。登録時だけ `TF_VAR_slack_bot_token` が要る（zsh では `read -s "TF_VAR_slack_bot_token?Slack bot token: "`）。通知Tool は、Slack の `chat.postMessage` を OpenAPI で公開する形（チャンネルIDと本文を渡す）。
+- 止まっている点（2026-11-23）：token の登録は `secretsmanager:CreateSecret` の権限不足で止まった（Slack アプリは作成・インストール済み）。管理者に、Secrets Manager の権限（`bedrock-agentcore*` のシークレットに限定）を依頼した。付いたら、tfvars に `enable_slack_notify = true` を書き、`TF_VAR_slack_bot_token` を設定して apply する。
+
+- 動作確認（2026-11-23）：Gateway（`kane-drift-gateway`）に、2LO のトークンで接続し、調査 Tool が一覧に出ること、トークンなしは 401 になること、調査 Tool を呼ぶと Lambda まで届いて結果（履歴と現在のSGの設定）が返ることを確認した。初回は Lambda が3秒でタイムアウトしたため、調査 Lambda の制限時間を15秒、申告・承認 Lambda を10秒に延ばした。Gateway の Tool 名は `investigate___investigate_security_group`（対象名と Tool 名が `___` でつながる）。
+- 未決（2026-11-23）：2LO のトークン（drift-handler）でも調査 Tool を呼べてしまう。「権限のない人は調査で拒否される」を、Gateway の入口（スコープを分ける）で止めるか、Lambda 側で判定するかを決める。
+
 ## 次にやること
 
 - AgentCore を Terraform で書く（Gateway、通知Tool、調査Tool、Slack の bot token）。

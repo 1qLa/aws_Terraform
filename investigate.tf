@@ -46,6 +46,7 @@ resource "aws_lambda_function" "investigate" {
   role             = aws_iam_role.investigate_lambda_role.arn
   handler          = "investigate.investigate_handler"
   runtime          = "python3.9"
+  timeout          = 15 // 秒。既定の3秒だと、初回の起動と、台帳・EC2への問い合わせで足りなかった
   filename         = data.archive_file.api_zip.output_path
   source_code_hash = data.archive_file.api_zip.output_base64sha256
 

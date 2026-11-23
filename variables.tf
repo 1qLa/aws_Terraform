@@ -51,3 +51,30 @@ variable "test_user_password" {
   sensitive   = true
   default     = null
 }
+
+variable "slack_bot_token" {
+  description = "Slackのbot token(xoxb-...)。AgentCore Identityに登録するときだけ使い、stateには保存されない。tfvarsには書かず、環境変数 TF_VAR_slack_bot_token で渡す"
+  type        = string
+  sensitive   = true
+  ephemeral   = true // plan や state に残さない
+  default     = null
+
+  # 空文字や形の違う値が AWS に送られて、分かりにくいエラーになるのを防ぐ。
+  # 未設定(null)は許可する。token を登録しない通常の plan / apply で、毎回エラーにならないようにするため
+  validation {
+    condition     = var.slack_bot_token == null ? true : startswith(var.slack_bot_token, "xoxb-")
+    error_message = "slack_bot_token は xoxb- で始まる必要があります（空文字や、別の値ではありません）。"
+  }
+}
+
+variable "slack_bot_token_version" {
+  description = "bot tokenを入れ替えたときに、この数字を1つ増やすと、Terraformが新しいtokenを再登録する"
+  type        = number
+  default     = 1
+}
+
+variable "enable_slack_notify" {
+  description = "Slackのbot tokenの登録と、Gatewayの通知Toolを作るか。登録には環境変数 TF_VAR_slack_bot_token が必要で、Secrets Managerの権限も要る。権限が付くまでは false にしておく"
+  type        = bool
+  default     = false
+}
