@@ -57,3 +57,7 @@ output "api_base_url" {
     description = "申告・承認APIのURL（末尾に /attest/{event_id} または /approve/{event_id}）"
     value = aws_api_gateway_stage.v1.invoke_url
 }
+output "cognito_test_cli_client_id" {
+    description = "動作確認用クライアントのID（テスト専用）"
+    value = aws_cognito_user_pool_client.test_cli.id
+}

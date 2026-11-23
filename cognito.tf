@@ -114,6 +114,14 @@ resource "aws_cognito_user" "test" {
     email_verified   = "true"
     "custom:iam_arn" = each.value.iam_arn
   }
+
+  # プロバイダーが読み取り時に "custom:" を外して比較するため、値が同じでも毎回差分に見える。
+  # それを避けるため、作成後の属性の変更は Terraform では反映しない。
+  # メールやiam_arnを直したいときは、ここを一時的に外して apply するか、
+  # aws cognito-idp admin-update-user-attributes で直接直す
+  lifecycle {
+    ignore_changes = [attributes]
+  }
 }
 
 # ユーザーをグループに入れる（グループで権限の上下が決まる）
@@ -123,4 +131,13 @@ resource "aws_cognito_user_in_group" "test" {
   user_pool_id = aws_cognito_user_pool.main.id
   group_name   = each.value.group
   username     = aws_cognito_user.test[each.key].username
+}
+
+# 動作確認用: CLIからパスワードでトークンを取るためのクライアント（テスト専用。確認が終わったら削除してよい）
+resource "aws_cognito_user_pool_client" "test_cli" {
+  name         = "${var.prefix}-test-cli"
+  user_pool_id = aws_cognito_user_pool.main.id
+
+  generate_secret     = false
+  explicit_auth_flows = ["ALLOW_ADMIN_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
 }

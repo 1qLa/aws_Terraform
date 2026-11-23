@@ -101,9 +101,15 @@
 - 未決（調査）：「権限のない人は調査で拒否される」を、どこで判定するかが決まっていない。AgentCore Gateway が、Lambda にログインした人の情報を渡すかは、公式ドキュメントで未確認。Gateway の入口の認可（トークンのスコープやグループ）で止めるのか、Lambda 側で判定するのかを、AgentCore の権限が付いてから確認する。
 - 実装（2026-11-23）：AWSプロバイダーを v6 に上げても問題ないかを、コピーで確認した。v6.73.0 で validate は成功、plan は v5 と同じ差分。AgentCore のリソース（Gateway、Gateway Target、API key / OAuth2 credential provider など）が使える。公式: https://registry.terraform.io/providers/hashicorp/awS/latest/docs/guides/version-6-upgrade 、https://github.com/hashicorp/terraform-provider-aws/issues/43424 （確認日 2026-11-23）。上げるのは、API Gateway の apply が終わったあとにする。
 
+- 動作確認（2026-11-23）：申告・承認APIを、田中・佐藤・鈴木のシナリオで確認した（`drafts/test_api.sh`）。9件すべて期待どおり（OK 9 / NG 0）。本人は申告できる／本人以外は拒否／理由なしは拒否／再申告は拒否／未申告は承認不可／申告者本人は承認不可／同じ権限は承認不可／上位は承認できる／再承認は拒否。`cognito:groups` は、API Gateway から想定どおりの形で Lambda に渡ることも確認できた。確認用のデータは、終了時に自動で削除される。
+- 注意（2026-11-23）：Terraform の `aws_cognito_user` で属性を更新すると、`custom:iam_arn` が消えた（プロバイダーが `iam_arn` と `custom:iam_arn` を別物として扱い、削除を実行するため）。直すために、3人の値を `aws cognito-idp admin-update-user-attributes` で戻した。再発を避けるため、`cognito.tf` に `ignore_changes = [attributes]` を付けてある。属性を直したいときは、CLI で直す。
+- 追加（2026-11-23）：テスト専用の Cognito クライアント `kane-test-cli`（パスワードで ID トークンを取るため）。確認が終わったら、削除してよい。
+
+- 決まったこと（2026-11-23）：最上位のグループの人が申告したときは、承認できる人がいなくなるため、最上位に限り、同じ最上位の別の人も承認できるようにした（本人は不可）。ルールは「承認者の Precedence が申告者より小さい」または「申告者も承認者も最上位（数値が最小のグループ）で、本人でない」。最上位が1人だけのときは承認できる人がいないので、最上位には2人以上を置く運用が前提。`api/handlers.py` の `can_approve` に実装し、単体テストを4件足した（全21件が通る）。テストユーザーに山田（leads の2人目）を追加し、`drafts/test_api.sh` に最上位のシナリオ4件を足した。apply して、実環境でも確認した（`drafts/test_api.sh` の13件がすべて OK）。
+
 ## 次にやること
 
-- 月曜に、API Gateway の権限を管理者に頼む。付いたら `terraform apply` で、API Gateway の残りを作成する。
+- AWSプロバイダーを v6 に上げ、AgentCore を Terraform で書く（Gateway、通知Tool、調査Tool、Slack の bot token）。
 - `src/app.py` の改修を apply し、DynamoDB に記録されることを確認する（Config の再開が必要）。
 - 資料周りの作業は、実装を優先して後回しにする（本人の方針）。
 - 11/16までに Cognito などに着手したら、19・20枚目に反映する（19枚目は task.md の10月8日時点の状況に基づく）。

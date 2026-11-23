@@ -142,8 +142,8 @@ resource "aws_api_gateway_deployment" "drift" {
   # 設定が変わったときだけ、デプロイし直す
   triggers = {
     redeployment = sha1(jsonencode([
-      aws_api_gateway_method.post,
-      aws_api_gateway_integration.lambda,
+      [for m in aws_api_gateway_method.post : m.id],
+      [for i in aws_api_gateway_integration.lambda : i.id],
       aws_api_gateway_authorizer.cognito.id,
     ]))
   }

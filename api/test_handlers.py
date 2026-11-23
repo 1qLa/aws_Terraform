@@ -93,5 +93,32 @@ class ApproveTest(Base):
         self.assertEqual(r['statusCode'], 409)
 
 
+class TopGroupApproveTest(Base):
+    # 最上位のグループ（leads）の人が申告したとき
+    def setUp(self):
+        super().setUp()
+        self.item.update(status='ATTESTED', attested_by='suzuki@x', attester_precedence=10)
+
+    def test_最上位の別の人は承認できる(self):
+        r = handlers.approve_handler(req('yamada@x', 'leads'), None)
+        self.assertEqual(r['statusCode'], 200)
+        self.assertEqual(self.item['approved_by'], 'yamada@x')
+
+    def test_最上位でも申告者本人は承認できない(self):
+        r = handlers.approve_handler(req('suzuki@x', 'leads'), None)
+        self.assertEqual(r['statusCode'], 403)
+        self.assertEqual(self.item['status'], 'ATTESTED')
+
+    def test_下位の人は承認できない(self):
+        r = handlers.approve_handler(req('tanaka@x', 'developers'), None)
+        self.assertEqual(r['statusCode'], 403)
+
+    def test_最上位以外の同じ権限は承認できない(self):
+        # developers（20）の申告は、同じ developers の人が承認できない
+        self.item.update(attested_by='tanaka@x', attester_precedence=20)
+        r = handlers.approve_handler(req('sato@x', 'developers'), None)
+        self.assertEqual(r['statusCode'], 403)
+
+
 if __name__ == '__main__':
     unittest.main()

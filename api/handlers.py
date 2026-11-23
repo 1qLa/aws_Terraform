@@ -53,6 +53,17 @@ def best_precedence(groups):
     return min(values) if values else None
 
 
+def can_approve(approver_precedence, attester_precedence):
+    # 申告者より権限が高い（Precedenceが小さい）人は、承認できる。
+    # 例外: 最上位のグループには、その上がいない。そのため、申告者も承認者も最上位のグループなら、
+    # 同じ権限でも承認できる（本人かどうかは、呼び出し側で別に確認する）
+    if approver_precedence < attester_precedence:
+        return True
+    table = group_precedence()
+    top = min(table.values()) if table else None
+    return top is not None and approver_precedence == top and attester_precedence == top
+
+
 def get_event_item(event):
     event_id = (event.get('pathParameters') or {}).get('event_id')
     if not event_id:
@@ -106,7 +117,8 @@ def attest_handler(event, context):
 
 
 def approve_handler(event, context):
-    # 承認: 申告者より権限が高いグループの人だけが承認できる。同じ権限の人や本人は承認できない
+    # 承認: 申告者より権限が高いグループの人が承認できる。本人は承認できない。
+    # 最上位のグループだけは、同じ最上位の別の人も承認できる
     claims = get_claims(event)
     approver_email = claims.get('email')
     approver_precedence = best_precedence(get_groups(claims))
@@ -124,7 +136,7 @@ def approve_handler(event, context):
     attester_precedence = item.get('attester_precedence', -1)
     if attester_precedence == -1:
         return response(403, {'message': '申告者のグループが不明なため承認できません'})
-    if not approver_precedence < attester_precedence:
+    if not can_approve(approver_precedence, attester_precedence):
         return response(403, {'message': '申告者より権限が高い人だけが承認できます'})
 
     try:
