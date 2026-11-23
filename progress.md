@@ -132,6 +132,8 @@
 
 - 実装（2026-11-23）：Lambda 4つ（drift-handler、申告、承認、調査）のランタイムを、Python 3.9 から 3.13 に上げた。3.9 は、2025年12月15日に非推奨になっており、3.13 と 3.14 は 2029年6月30日までサポートされる（公式: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html 、確認日 2026-11-23）。実績のある 3.13 を選んだ。手元の Python は 3.9 のみで、3.13 のテストは、実際の Lambda で行った。apply 後、drift-handler を空のイベントで起動でき（読み込みの確認）、申告・承認 13件、調査の権限 7件が、すべて期待どおりだった。
 
+- 片付け（2026-11-23）：動作確認用の Cognito クライアント（`kane-test-cli`）を、変数 `enable_test_client`（既定 false）が true のときだけ作る形にした。パスワードで直接トークンを取れる弱い認証方式のため。確認スクリプト（`drafts/test_api.sh`、`drafts/test_investigate_access.py`）を実行するときは、tfvars に `enable_test_client = true` を書いて apply し、終わったら false に戻す。調査用 Gateway の許可クライアントからも、同時に外れる。台帳は、Config 再開直後の初回の記録（変更内容も操作者もない2件、`kane-rds-sg` と `kane-alb-sg`）を削除し、`kane-bastion-sg` の追加（承認済み）と削除（未申告）の2件を、検証の記録として残した。Slack の「通知」チャンネルには、確認用の通知が数件残っている（手動で削除する）。
+
 ## 次にやること
 
 - AgentCore を Terraform で書く（Gateway、通知Tool、調査Tool、Slack の bot token）。

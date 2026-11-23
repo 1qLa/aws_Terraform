@@ -84,3 +84,9 @@ variable "enable_slack_notify" {
   type        = bool
   default     = false
 }
+
+variable "enable_test_client" {
+  description = "動作確認用のCognitoクライアント(パスワードで直接トークンを取れる)を作るか。drafts/ の確認スクリプトを実行するときだけ true にし、終わったら false に戻す"
+  type        = bool
+  default     = false
+}

@@ -133,8 +133,11 @@ resource "aws_cognito_user_in_group" "test" {
   username     = aws_cognito_user.test[each.key].username
 }
 
-# 動作確認用: CLIからパスワードでトークンを取るためのクライアント（テスト専用。確認が終わったら削除してよい）
+# 動作確認用: CLIからパスワードでトークンを取るためのクライアント（テスト専用）。
+# パスワードで直接トークンを取れる弱い認証方式のため、確認スクリプトを実行するときだけ作り、終わったら消す
 resource "aws_cognito_user_pool_client" "test_cli" {
+  count = var.enable_test_client ? 1 : 0 // 既定では作らない(enable_test_client = true のときだけ)
+
   name         = "${var.prefix}-test-cli"
   user_pool_id = aws_cognito_user_pool.main.id
 

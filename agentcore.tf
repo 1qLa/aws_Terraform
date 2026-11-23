@@ -74,10 +74,10 @@ resource "aws_bedrockagentcore_gateway" "investigate" {
   authorizer_configuration {
     custom_jwt_authorizer {
       discovery_url = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.main.id}/.well-known/openid-configuration"
-      allowed_clients = [
-        aws_cognito_user_pool_client.claude_code.id, // Claude Code(3LO)
-        aws_cognito_user_pool_client.test_cli.id,    // 動作確認用(テスト専用。確認が終わったら外す)
-      ]
+      allowed_clients = concat(
+        [aws_cognito_user_pool_client.claude_code.id], // Claude Code(3LO)
+        aws_cognito_user_pool_client.test_cli[*].id,   // 動作確認用(enable_test_client = true のときだけ)
+      )
 
       # トークンの cognito:groups に、許可するグループのどれかが入っているときだけ通す
       custom_claim {

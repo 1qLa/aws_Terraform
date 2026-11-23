@@ -58,6 +58,6 @@ output "api_base_url" {
     value = aws_api_gateway_stage.v1.invoke_url
 }
 output "cognito_test_cli_client_id" {
-    description = "動作確認用クライアントのID（テスト専用）"
-    value = aws_cognito_user_pool_client.test_cli.id
+    description = "動作確認用クライアントのID(enable_test_client = true のときだけ。テスト専用)"
+    value = one(aws_cognito_user_pool_client.test_cli[*].id)
 }

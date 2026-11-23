@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # 申告・承認APIの動作確認（田中・佐藤・鈴木のシナリオ）
-# 使い方: リポジトリのルートで  bash drafts/test_api.sh
+# 使い方: terraform.tfvars に enable_test_client = true を書いて apply したあと、リポジトリのルートで  bash drafts/test_api.sh
+# （確認が終わったら、enable_test_client を false に戻して apply する）
 # 台帳にテスト用のデータ(test-001, test-002)を入れ、確認後に削除する
 set -u
 cd "$(dirname "$0")/.."
@@ -8,7 +9,11 @@ cd "$(dirname "$0")/.."
 export AWS_PROFILE=dev AWS_REGION=ap-northeast-1 AWS_PAGER=""
 URL=$(terraform output -raw api_base_url)
 POOL=$(terraform output -raw cognito_user_pool_id)
-CLIENT=$(terraform output -raw cognito_test_cli_client_id)
+CLIENT=$(terraform output -raw cognito_test_cli_client_id 2>/dev/null)
+if [ -z "$CLIENT" ]; then
+  echo "テスト用のCognitoクライアントがありません。terraform.tfvars に enable_test_client = true を書いて apply してください（確認後は false に戻す）"
+  exit 1
+fi
 TABLE=$(terraform output -raw drift_events_table_name)
 PW=$(sed -n 's/^test_user_password *= *"\(.*\)"/\1/p' terraform.tfvars)
 

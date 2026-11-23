@@ -1,6 +1,7 @@
 """調査Toolの権限の動作確認（誰が通り、誰が拒否されるか）
 
-使い方: リポジトリのルートで  python3 drafts/test_investigate_access.py
+使い方: terraform.tfvars に enable_test_client = true を書いて apply したあと、リポジトリのルートで  python3 drafts/test_investigate_access.py
+（確認が終わったら、enable_test_client を false に戻して apply する）
 確認すること（読み取りだけで、AWSの設定やデータは変更しない）:
   - leads / developers のグループの人は、調査Toolを呼べる
   - どのグループにも入っていない人（guest）は、入口で拒否される
@@ -38,7 +39,10 @@ def gateway_url(name):
 
 
 POOL = tf_output("cognito_user_pool_id")
-TEST_CLIENT = tf_output("cognito_test_cli_client_id")
+try:
+    TEST_CLIENT = tf_output("cognito_test_cli_client_id")
+except subprocess.CalledProcessError:
+    sys.exit("テスト用のCognitoクライアントがありません。terraform.tfvars に enable_test_client = true を書いて apply してください")
 PASSWORD = re.search(r'^test_user_password\s*=\s*"(.*)"', open("terraform.tfvars").read(), re.M).group(1)
 INVESTIGATE_URL = gateway_url("kane-investigate-gateway")
 NOTIFY_URL = gateway_url("kane-drift-gateway")
