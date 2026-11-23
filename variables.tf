@@ -30,9 +30,9 @@ variable "enable_config_recording" {
 }
 
 variable "web_callback_urls" {
-  description = "ブラウザ（申告・承認画面）のログイン後に戻るURL。画面を作るまでは仮の値"
+  description = "申告・承認の画面のほかに、ログイン後に戻るURLを足したいとき(ローカルでの確認など)。画面のURLは、自動で入る"
   type        = list(string)
-  default     = ["http://localhost:3000/callback"]
+  default     = []
 }
 
 variable "claude_code_callback_urls" {

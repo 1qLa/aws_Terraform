@@ -10,7 +10,7 @@ import gateway_client
 
 # 通知先のSlackチャンネルID（環境変数）
 slack_channel = os.environ['SLACK_CHANNEL_ID']
-# 申告・承認APIのURL（メッセージに載せる。未設定でも動く）
+# 申告・承認の画面があるAPIのURL（通知のリンクに使う。未設定でも動く）
 approval_api_url = os.environ.get('APPROVAL_API_URL', '')
 
 # 台帳（DynamoDB）のテーブル名を環境変数から取得
@@ -195,8 +195,8 @@ def lambda_handler(event, context):
         message += f"*- 変更内容:* {parsed_diff_text}\n"
         message += f"*- 申告・承認ID:* `{event_id}`\n"
         if approval_api_url:
-            message += f"*- 申告:* `POST {approval_api_url}/attest/{event_id}`\n"
-            message += f"*- 承認:* `POST {approval_api_url}/approve/{event_id}`\n"
+            # 画面を開くリンク。Slackの書き方は <URL|表示する文字>
+            message += f"*- 申告・承認:* <{approval_api_url}/ui?event={event_id}|申告・承認の画面を開く>\n"
         message += "--------------------------------------------------\n"
 
         # Gateway経由でSlackへ送信する。失敗したら例外にして、SQSに再配信させる（台帳は、重複しない）

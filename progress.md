@@ -136,6 +136,8 @@
 
 - 図の更新（2026-11-23）：`drafts/drift-notifier-zones.drawio`（領域別の4ページ）を、実装に合わせて直した。元の設計図（`architecture/`）は、設計の記録として変えていない（本人の選択）。検知：クライアントシークレットを取得する Secrets Manager を追加（図形1つ、線1本、文字1つ）、Gateway を「通知用」に。認証：Gateway を「通知用」（drift-handler）と「調査用」（Claude Code）の2つに分け、調査用の入口の条件（leads / developers のグループの人だけ）を注記。Claude Code の線と Lambda investigate の線は、調査用 Gateway に付け替えた。本人確認・承認：最上位のグループの例外（同じ最上位の別の人も承認できる）を追加し、「Slackのリンクから」を「Slackの通知を見て」に。調査：Gateway を「調査用」に、「AWS API（EC2 / Config）」を「EC2 API」に、入口の条件の注記を追加。draw.io で開いた見た目は未確認（座標の重なりは、スクリプトで検査し、新しい要素どうしの重なりと、線の横切りがないことを確認した）。draw.io で開いて確認し、PNG を書き出して、Canva の図を差し替える必要がある。
 
+- 実装（2026-11-23）：申告・承認の画面（フロントエンド）を作った（まだ apply していない）。画面は、API Gateway + Lambda から配信する（S3・CloudFront は使わない。追加の権限が要らず、同じ場所なので CORS も不要）。`GET /ui`（画面。ログイン前でも開ける）、`GET /events/{event_id}`（内容の表示。leads と developers の人だけ）を追加した。ログインは Cognito のログイン画面（Authorization Code + PKCE、既存の `kane-web` クライアント）。画面は、通知のリンク（`/ui?event=<ID>`）から開き、内容を表示して、申告（理由を入力）と承認のボタンを出す。Slack の通知には、実際に開けるリンクを載せた。安全面：外から来た文字は `textContent` だけで入れる（HTMLとして解釈する書き方は、テストで禁止）、CSP（外への通信は自分とCognitoだけ、nonce 付き）、`Referrer-Policy: no-referrer`、トークンは `sessionStorage`（タブを閉じると消える）。コード：`api/web/index.html`、`api/ui.py`、`api/handlers.py` の `get_event_handler`、Terraform は `ui.tf`。単体テストは api が 33 件、src が 13 件。確認スクリプトは `drafts/test_ui.py`。
+
 ## 次にやること
 
 - AgentCore を Terraform で書く（Gateway、通知Tool、調査Tool、Slack の bot token）。

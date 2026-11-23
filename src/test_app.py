@@ -47,8 +47,8 @@ class HandlerTest(unittest.TestCase):
         channel, text = self.sent[0]
         self.assertEqual(channel, 'C1')
         self.assertIn(item['event_id'], text)
-        self.assertIn(f"POST https://api.example/v1/attest/{item['event_id']}", text)
-        self.assertIn(f"POST https://api.example/v1/approve/{item['event_id']}", text)
+        # 画面を開くリンク（Slackの <URL|文字> の形）
+        self.assertIn(f"<https://api.example/v1/ui?event={item['event_id']}|申告・承認の画面を開く>", text)
 
     def test_再配信されても同じevent_idになる(self):
         app.lambda_handler(sqs_event('m-1'), None)

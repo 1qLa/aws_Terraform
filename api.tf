@@ -28,7 +28,7 @@ resource "aws_iam_role_policy_attachment" "api_lambda_logs" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# 台帳の読み取りと更新だけを許可（新規作成・削除はできない）
+# 台帳の読み取り(取得・一覧)と更新だけを許可（新規作成・削除はできない）
 resource "aws_iam_role_policy" "api_lambda_dynamodb" {
   name = "api-lambda-dynamodb-policy"
   role = aws_iam_role.api_lambda_role.id
@@ -37,7 +37,7 @@ resource "aws_iam_role_policy" "api_lambda_dynamodb" {
     Version = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
-      Action   = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
+      Action   = ["dynamodb:GetItem", "dynamodb:UpdateItem", "dynamodb:Scan"] // Scan: 一覧の表示用(読み取りだけ)
       Resource = aws_dynamodb_table.drift_events.arn
     }]
   })
@@ -49,6 +49,19 @@ locals {
     attest  = "handlers.attest_handler"
     approve = "handlers.approve_handler"
   }
+
+  # 台帳を読み書きするLambda(申告・承認・内容の表示)の共通の環境変数
+  api_lambda_env = {
+    DRIFT_TABLE_NAME = aws_dynamodb_table.drift_events.name
+    # グループ名とPrecedenceの対応。承認の権限判定と、内容を見られる人の判定に使う
+    GROUP_PRECEDENCE = jsonencode({
+      (aws_cognito_user_group.leads.name)      = aws_cognito_user_group.leads.precedence
+      (aws_cognito_user_group.developers.name) = aws_cognito_user_group.developers.precedence
+    })
+  }
+
+  # APIのステージ名(画面のURLを、ステージの作成より先に決めるため、ここで固定する)
+  api_stage_name = "v1"
 }
 
 resource "aws_lambda_function" "api" {
@@ -63,14 +76,7 @@ resource "aws_lambda_function" "api" {
   source_code_hash = data.archive_file.api_zip.output_base64sha256
 
   environment {
-    variables = {
-      DRIFT_TABLE_NAME = aws_dynamodb_table.drift_events.name
-      # グループ名とPrecedenceの対応。承認の権限判定に使う
-      GROUP_PRECEDENCE = jsonencode({
-        (aws_cognito_user_group.leads.name)      = aws_cognito_user_group.leads.precedence
-        (aws_cognito_user_group.developers.name) = aws_cognito_user_group.developers.precedence
-      })
-    }
+    variables = local.api_lambda_env
   }
 }
 
@@ -146,6 +152,13 @@ resource "aws_api_gateway_deployment" "drift" {
       [for m in aws_api_gateway_method.post : m.id],
       [for i in aws_api_gateway_integration.lambda : i.id],
       aws_api_gateway_authorizer.cognito.id,
+      // 画面と内容表示のAPI(ui.tf)
+      aws_api_gateway_method.ui_get.id,
+      aws_api_gateway_integration.ui.id,
+      aws_api_gateway_method.events_get.id,
+      aws_api_gateway_integration.events.id,
+      aws_api_gateway_method.events_list.id,
+      aws_api_gateway_integration.events_list.id,
     ]))
   }
 
@@ -157,5 +170,5 @@ resource "aws_api_gateway_deployment" "drift" {
 resource "aws_api_gateway_stage" "v1" {
   rest_api_id   = aws_api_gateway_rest_api.drift.id
   deployment_id = aws_api_gateway_deployment.drift.id
-  stage_name    = "v1"
+  stage_name    = local.api_stage_name
 }

@@ -80,10 +80,12 @@ resource "aws_cognito_user_pool_client" "web" {
   generate_secret                      = false
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_flows                  = ["code"]
-  allowed_oauth_scopes                 = ["openid", "email"]
-  supported_identity_providers         = ["COGNITO"]
-  callback_urls                        = var.web_callback_urls
-  explicit_auth_flows                  = ["ALLOW_REFRESH_TOKEN_AUTH"]
+  // profile: ID トークンに、独自の属性(custom:iam_arn)を入れるために必要。申告で、ログインした人と変更した人の一致を確認する
+  allowed_oauth_scopes         = ["openid", "email", "profile"]
+  supported_identity_providers = ["COGNITO"]
+  callback_urls                = concat([local.ui_url], var.web_callback_urls) // 申告・承認の画面(ui.tf)
+  logout_urls                  = [local.ui_url]
+  explicit_auth_flows          = ["ALLOW_REFRESH_TOKEN_AUTH"]
 }
 
 # 3LO用: Claude Code（MCP接続）

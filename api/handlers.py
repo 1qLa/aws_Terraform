@@ -64,6 +64,20 @@ def can_approve(approver_precedence, attester_precedence):
     return top is not None and approver_precedence == top and attester_precedence == top
 
 
+def check_approver(item, approver_email, approver_precedence):
+    # 承認できるなら None。できないなら (HTTPコード, 理由)。承認と、画面のボタンの表示で、同じ判定を使う
+    if item.get('status') != 'ATTESTED':
+        return 409, f"承認できる状態ではありません（状態: {item.get('status')}）"
+    if approver_email == item.get('attested_by'):
+        return 403, '申告者本人は承認できません'
+    attester_precedence = item.get('attester_precedence', -1)
+    if attester_precedence == -1:
+        return 403, '申告者のグループが不明なため承認できません'
+    if not can_approve(approver_precedence, attester_precedence):
+        return 403, '申告者より権限が高い人だけが承認できます'
+    return None
+
+
 def get_event_item(event):
     event_id = (event.get('pathParameters') or {}).get('event_id')
     if not event_id:
@@ -128,16 +142,9 @@ def approve_handler(event, context):
     item, error = get_event_item(event)
     if error:
         return error
-    if item.get('status') != 'ATTESTED':
-        return response(409, {'message': f"承認できる状態ではありません（状態: {item.get('status')}）"})
-    if approver_email == item.get('attested_by'):
-        return response(403, {'message': '申告者本人は承認できません'})
-
-    attester_precedence = item.get('attester_precedence', -1)
-    if attester_precedence == -1:
-        return response(403, {'message': '申告者のグループが不明なため承認できません'})
-    if not can_approve(approver_precedence, attester_precedence):
-        return response(403, {'message': '申告者より権限が高い人だけが承認できます'})
+    denied = check_approver(item, approver_email, approver_precedence)
+    if denied:
+        return response(*denied)
 
     try:
         get_table().update_item(
@@ -154,3 +161,76 @@ def approve_handler(event, context):
             return response(409, {'message': 'すでに承認済みです'})
         raise
     return response(200, {'message': '承認を記録しました'})
+
+
+# 画面に出す項目(申告・承認の判断に必要なものだけ)
+EVENT_FIELDS = (
+    'event_id', 'resource_id', 'resource_name', 'resource_type', 'detected_at', 'diff',
+    'operator', 'operator_arn', 'status', 'reason', 'attested_by', 'attested_at',
+    'approved_by', 'approved_at',
+)
+
+
+def viewer_actions(item, claims):
+    # ログインした人が、この1件に対してできる操作と、できないときの理由。画面は、これに従ってボタンを出す
+    email = claims.get('email')
+    status = item.get('status')
+    actions = {'email': email, 'can_attest': False, 'can_approve': False, 'note': ''}
+    if status == 'DETECTED':
+        if claims.get('custom:iam_arn') and claims.get('custom:iam_arn') == item.get('operator_arn'):
+            actions['can_attest'] = True
+        else:
+            actions['note'] = 'この変更を行った本人ではないため、申告できません。'
+    elif status == 'ATTESTED':
+        if email == item.get('attested_by'):
+            actions['note'] = 'あなたが申告しました。承認は、申告者より権限が高い、別の人が行います。'
+        else:
+            denied = check_approver(item, email, best_precedence(get_groups(claims)))
+            if denied is None:
+                actions['can_approve'] = True
+            else:
+                actions['note'] = denied[1] + '。'
+    elif status == 'APPROVED':
+        actions['note'] = '承認済みです。'
+    return actions
+
+
+def get_event_handler(event, context):
+    # 内容の表示: leads か developers のグループの人だけが、1件の内容を読める。読み取り専用
+    claims = get_claims(event)
+    if best_precedence(get_groups(claims)) is None:
+        return response(403, {'message': '内容を見られるグループに入っていません'})
+
+    item, error = get_event_item(event)
+    if error:
+        return error
+    body = {key: item[key] for key in EVENT_FIELDS if key in item}
+    body['viewer'] = viewer_actions(item, claims)
+    return response(200, body)
+
+
+LIST_FIELDS = ('event_id', 'resource_id', 'resource_name', 'detected_at', 'status', 'diff')
+LIST_LIMIT = 50
+
+
+def list_events_handler(event, context):
+    # 一覧: 新しい順に、最大50件。leads か developers のグループの人だけが読める。読み取り専用
+    # 台帳は、研究用で件数が少ないため、全体を読んで並べ替える(件数が増えたら、検索用のインデックスを使う形に変える)
+    if best_precedence(get_groups(get_claims(event))) is None:
+        return response(403, {'message': '内容を見られるグループに入っていません'})
+
+    items, start_key = [], None
+    while True:
+        kwargs = {'ProjectionExpression': '#id, resource_id, resource_name, detected_at, #s, diff',
+                  'ExpressionAttributeNames': {'#id': 'event_id', '#s': 'status'}}
+        if start_key:
+            kwargs['ExclusiveStartKey'] = start_key
+        result = get_table().scan(**kwargs)
+        items.extend(result.get('Items', []))
+        start_key = result.get('LastEvaluatedKey')
+        if not start_key:
+            break
+
+    items.sort(key=lambda i: i.get('detected_at', ''), reverse=True)
+    return response(200, {'events': [{k: i[k] for k in LIST_FIELDS if k in i} for i in items[:LIST_LIMIT]]})
+
