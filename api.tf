@@ -57,7 +57,7 @@ resource "aws_lambda_function" "api" {
   function_name    = "${var.prefix}-${each.key}-handler"
   role             = aws_iam_role.api_lambda_role.arn
   handler          = each.value
-  runtime          = "python3.9"
+  runtime          = "python3.13"
   timeout          = 10 // 秒。既定の3秒だと、初回の起動で足りなくなることがある
   filename         = data.archive_file.api_zip.output_path
   source_code_hash = data.archive_file.api_zip.output_base64sha256

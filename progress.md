@@ -120,7 +120,6 @@
 - 決まったこと（2026-11-23）：drift-handler の 2LO クライアントのシークレットは、Secrets Manager に置く（案B）。名前は、管理者に付けてもらった権限の範囲に合わせて `bedrock-agentcore-kane-drift-handler-client`。値は write-only で登録する。
 - 実装（2026-11-23）：drift-handler（`src/app.py`）を、Webhook から Gateway 経由の通知に置き換えた（`src/gateway_client.py`。Cognito の 2LO でトークンを取り、`notify___postMessage` を呼ぶ）。`event_id` は、SQS のメッセージIDから決めて、再配信されても重複して記録されないようにし、通知に失敗したら例外にして再配信させる。Slack のメッセージには、`event_id` と申告・承認 API の URL を載せる（リンクではなく、POST の書き方）。単体テストは、src が 11 件、api が 21 件。Lambda の制限時間を 30 秒、SQS の再配信までの時間を 180 秒にした。`SLACK_WEBHOOK_URL` は Lambda から外した（変数は、tfvars に残っていても、エラーにならないよう、残している）。まだ apply していない。
 - 課題（2026-11-23）：申告・承認の API は、ログインのトークンを付けた POST でないと呼べない。Slack のメッセージのリンクから、ブラウザで開く形にするには、ログインして API を呼ぶ画面（フロントエンド）が要る。いまは作っていない。
-- 課題（2026-11-23）：Lambda のランタイムが `python3.9` のまま。boto3 は、Python 3.9 を 2026年4月29日から、サポートしない（ローカルのテスト実行時の警告）。新しいランタイムへの更新を、あとで検討する。
 
 - 通しの動作確認（2026-11-23）：Config を SG だけの記録に絞って再開し、`kane-bastion-sg` に SSH(22) を `0.0.0.0/0` で追加して、検知から調査まで、実際の変更で確認した。約1分で Config が検知し、台帳に記録され（操作者の ARN は、変更した IAM ユーザーと一致）、Gateway 経由で Slack に通知された。申告は、本人以外が403・本人が200、承認は、申告者本人と同じ権限が403・上位が200。調査 Tool は、申告から承認までの履歴と、現在の設定を返した。確認後、追加したルールを削除し（これも検知された）、Config を停止した。台帳には、追加（承認済み）と削除（未申告）の2件が残っている。
 - 直した点（2026-11-23）：変更内容の表示が「ポート:22.0」になる不具合を、整数に直した（`normalize_port`）。Config の記録対象を、すべてのリソースから SG だけに絞った（`config.tf`。費用を抑えるため）。
@@ -130,6 +129,8 @@
 - 決まったこと（2026-11-23）：調査 Tool を使えるのは、leads と developers のグループの人で、グループなしは入口で拒否する。通知（2LO、drift-handler）と調査（3LO、人）の Gateway を分けた。drift-handler のトークンにはグループの情報がなく、同じ Gateway に条件を付けると、通知が拒否されるため。調査用 Gateway（`kane-investigate-gateway`）は、Claude Code のクライアントだけを許可し、トークンの `cognito:groups` に `leads` か `developers` が入っているときだけ通す（`CONTAINS_ANY`）。通知用 Gateway（`kane-drift-gateway`）は、drift-handler（2LO）のクライアントだけを許可する。
 - 動作確認（2026-11-23）：`drafts/test_investigate_access.py` で、7件すべて期待どおり（OK 7 / NG 0）。田中・佐藤（developers）と鈴木・山田（leads）は調査できる。グループなしの guest は403で拒否される。drift-handler（2LO）は調査Toolを呼べず、人のトークンは通知用Gatewayに入れない。`cognito:groups` が、アクセストークンの中で、想定した形で入っていることも確認できた。グループなしのテストユーザー `guest` を追加した（tfvars）。
 - Claude Code の登録を、調査用 Gateway の URL に付け替えた（`kane-investigate`）。ログインは、`/mcp` から行う。動作確認用に、テスト専用のクライアント（`kane-test-cli`）を、調査用 Gateway の許可クライアントに入れている。確認が終わったら外す。
+
+- 実装（2026-11-23）：Lambda 4つ（drift-handler、申告、承認、調査）のランタイムを、Python 3.9 から 3.13 に上げた。3.9 は、2025年12月15日に非推奨になっており、3.13 と 3.14 は 2029年6月30日までサポートされる（公式: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html 、確認日 2026-11-23）。実績のある 3.13 を選んだ。手元の Python は 3.9 のみで、3.13 のテストは、実際の Lambda で行った。apply 後、drift-handler を空のイベントで起動でき（読み込みの確認）、申告・承認 13件、調査の権限 7件が、すべて期待どおりだった。
 
 ## 次にやること
 

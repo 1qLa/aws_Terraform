@@ -160,7 +160,7 @@ resource "aws_lambda_function" "drift_handler" {
   function_name    = "${var.prefix}-drift-handler"
   role             = aws_iam_role.lambda_role.arn
   handler          = "app.lambda_handler"
-  runtime          = "python3.9"
+  runtime          = "python3.13"
   filename         = data.archive_file.lambda_zip.output_path         // Lambda関数のコードをZIPファイルとして指定
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256 // コードの変更を検知するためのハッシュ値
 
