@@ -1,12 +1,17 @@
 import json
 import os
-import urllib.request
 import uuid
 import boto3
+from botocore.exceptions import ClientError
 from datetime import datetime, timedelta, timezone
 
-# 環境変数からSlackのURLを取得
-slack_url = os.environ['SLACK_WEBHOOK_URL']
+# Slackへの通知は、AgentCore Gateway経由で行う（Slackのtokenは、Lambdaには置かない）
+import gateway_client
+
+# 通知先のSlackチャンネルID（環境変数）
+slack_channel = os.environ['SLACK_CHANNEL_ID']
+# 申告・承認APIのURL（メッセージに載せる。未設定でも動く）
+approval_api_url = os.environ.get('APPROVAL_API_URL', '')
 
 # 台帳（DynamoDB）のテーブル名を環境変数から取得
 drift_table = boto3.resource('dynamodb').Table(os.environ['DRIFT_TABLE_NAME'])
@@ -149,8 +154,8 @@ def lambda_handler(event, context):
                 username = "Error (権限不足)"
 
         # 台帳（DynamoDB）に検知内容と操作者を記録する
-        # 記録に失敗しても、Slack通知は止めない（失敗するとSQSが再配信し、通知が重複するため）
-        event_id = str(uuid.uuid4())
+        # event_id は、SQSのメッセージIDから決める。再配信されても同じIDになり、台帳に重複して記録されない
+        event_id = str(uuid.uuid5(uuid.NAMESPACE_URL, record['messageId']))
         detected_at = event_time_str or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         try:
             drift_table.put_item(Item={
@@ -163,8 +168,12 @@ def lambda_handler(event, context):
                 'operator_arn': operator_arn,   # CloudTrail上の操作者ARN
                 'diff': parsed_diff_text,       # 変更内容
                 'status': 'DETECTED'            # 検知済み（申告・承認はこれから）
-            })
+            }, ConditionExpression='attribute_not_exists(event_id)')  # 再配信で、申告済みの記録を上書きしない
+        except ClientError as e:
+            if e.response['Error']['Code'] != 'ConditionalCheckFailedException':
+                print(f"台帳への記録エラー: {e}")
         except Exception as e:
+            # 記録に失敗しても、通知は止めない
             print(f"台帳への記録エラー: {e}")
 
         # Slack通知メッセージの作成（Configの差分情報 ＋ CloudTrailの操作者情報）
@@ -175,20 +184,13 @@ def lambda_handler(event, context):
         message += f"*- ID:* `{resource_id}`\n"
         message += f"*- 操作者:* `{username}`\n"
         message += f"*- 変更内容:* {parsed_diff_text}\n"
+        message += f"*- 申告・承認ID:* `{event_id}`\n"
+        if approval_api_url:
+            message += f"*- 申告:* `POST {approval_api_url}/attest/{event_id}`\n"
+            message += f"*- 承認:* `POST {approval_api_url}/approve/{event_id}`\n"
         message += "--------------------------------------------------\n"
 
-        # Slackへ送信
-        payload = {
-            'text': message,
-            'username': 'drift-notice',  # ボットの名前
-            'icon_emoji': ':ghost:'      # お化けのアイコン
-        }
-
-        req = urllib.request.Request(
-            slack_url,
-            data=json.dumps(payload).encode('utf-8'),
-            headers={'Content-Type': 'application/json'}
-        )
-        urllib.request.urlopen(req)
+        # Gateway経由でSlackへ送信する。失敗したら例外にして、SQSに再配信させる（台帳は、重複しない）
+        gateway_client.post_slack_message(slack_channel, message)
 
     return {'statusCode': 200, 'body': 'Success'}

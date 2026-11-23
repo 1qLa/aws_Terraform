@@ -5,7 +5,7 @@
 data "archive_file" "api_zip" {
   type        = "zip"
   source_dir  = "api"
-  excludes    = ["test_handlers.py", "__pycache__"]
+  excludes    = ["test_*.py", "__pycache__"]
   output_path = "api_function.zip"
 }
 

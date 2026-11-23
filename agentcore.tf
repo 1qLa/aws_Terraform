@@ -157,7 +157,7 @@ resource "aws_iam_role_policy" "gateway_slack_token" {
       {
         Effect   = "Allow"
         Action   = "secretsmanager:GetSecretValue"
-        Resource = aws_bedrockagentcore_api_key_credential_provider.slack[0].api_key_secret_arn
+        Resource = aws_bedrockagentcore_api_key_credential_provider.slack[0].api_key_secret_arn[0].secret_arn // 保管庫のシークレットのARN(リスト形式で返るため、中身を取り出す)
       },
     ]
   })

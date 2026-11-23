@@ -116,6 +116,12 @@
 - 動作確認（2026-11-23）：Gateway（`kane-drift-gateway`）に、2LO のトークンで接続し、調査 Tool が一覧に出ること、トークンなしは 401 になること、調査 Tool を呼ぶと Lambda まで届いて結果（履歴と現在のSGの設定）が返ることを確認した。初回は Lambda が3秒でタイムアウトしたため、調査 Lambda の制限時間を15秒、申告・承認 Lambda を10秒に延ばした。Gateway の Tool 名は `investigate___investigate_security_group`（対象名と Tool 名が `___` でつながる）。
 - 未決（2026-11-23）：2LO のトークン（drift-handler）でも調査 Tool を呼べてしまう。「権限のない人は調査で拒否される」を、Gateway の入口（スコープを分ける）で止めるか、Lambda 側で判定するかを決める。
 
+- 実装（2026-11-23）：Slack の bot token の登録と通知 Tool を apply した。Gateway の通知 Tool（`notify___postMessage`）に、2LO のトークンで、テストメッセージを「通知」チャンネル（公開、ID は `C0CL5854BUZ`）へ送り、届いた（`ok: True`）。apply では、`api_key_secret_arn` がリスト形式で返り、IAM ポリシーが不正になるエラーが出たため、`[0].secret_arn` で取り出すよう直した。
+- 決まったこと（2026-11-23）：drift-handler の 2LO クライアントのシークレットは、Secrets Manager に置く（案B）。名前は、管理者に付けてもらった権限の範囲に合わせて `bedrock-agentcore-kane-drift-handler-client`。値は write-only で登録する。
+- 実装（2026-11-23）：drift-handler（`src/app.py`）を、Webhook から Gateway 経由の通知に置き換えた（`src/gateway_client.py`。Cognito の 2LO でトークンを取り、`notify___postMessage` を呼ぶ）。`event_id` は、SQS のメッセージIDから決めて、再配信されても重複して記録されないようにし、通知に失敗したら例外にして再配信させる。Slack のメッセージには、`event_id` と申告・承認 API の URL を載せる（リンクではなく、POST の書き方）。単体テストは、src が 11 件、api が 21 件。Lambda の制限時間を 30 秒、SQS の再配信までの時間を 180 秒にした。`SLACK_WEBHOOK_URL` は Lambda から外した（変数は、tfvars に残っていても、エラーにならないよう、残している）。まだ apply していない。
+- 課題（2026-11-23）：申告・承認の API は、ログインのトークンを付けた POST でないと呼べない。Slack のメッセージのリンクから、ブラウザで開く形にするには、ログインして API を呼ぶ画面（フロントエンド）が要る。いまは作っていない。
+- 課題（2026-11-23）：Lambda のランタイムが `python3.9` のまま。boto3 は、Python 3.9 を 2026年4月29日から、サポートしない（ローカルのテスト実行時の警告）。新しいランタイムへの更新を、あとで検討する。
+
 ## 次にやること
 
 - AgentCore を Terraform で書く（Gateway、通知Tool、調査Tool、Slack の bot token）。

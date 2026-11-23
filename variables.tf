@@ -6,9 +6,15 @@ variable "prefix" {
 }
 
 variable "SLACK_WEBHOOK_URL" {
-  description = "Slack Webhook URL for Drift Notification"
+  description = "(使わなくなった) Slack Webhook URL。通知は、AgentCore Gateway経由に置き換えた。tfvarsに残っていても、エラーにならないよう変数だけ残している"
   type        = string
   sensitive   = true # 画面にURLが表示されるのを防ぐセキュリティ設定
+  default     = null
+}
+
+variable "slack_channel_id" {
+  description = "ドリフトの通知を送るSlackチャンネルのID(C...)。terraform.tfvars に書く"
+  type        = string
 }
 
 variable "enable_workload" {

@@ -9,6 +9,9 @@ resource "aws_sqs_queue" "drift_queue" {
 
   // メッセージを保持する期間(14日間)
   message_retention_seconds = 1209600
+
+  // 処理中のメッセージを、他に見せない時間。Lambdaの制限時間より長くする必要がある(失敗したら、この時間のあとに再配信される)
+  visibility_timeout_seconds = 180
 }
 
 # EventBridgeからSNSへのメッセージ送信を許可するアクセスポリシー
@@ -22,7 +25,7 @@ resource "aws_sns_topic_policy" "allow_eventbridge_to_sns" {
       Principal = {
         Service = "events.amazonaws.com"
       }
-      Action = "sns:Publish"
+      Action   = "sns:Publish"
       Resource = aws_sns_topic.drift_alerts.arn
     }]
   })
@@ -33,7 +36,7 @@ resource "aws_sns_topic_subscription" "sns_to_sqs" {
   topic_arn = aws_sns_topic.drift_alerts.arn
   protocol  = "sqs"
   endpoint  = aws_sqs_queue.drift_queue.arn
-  
+
 }
 
 # SQSのアクセスポリシー(SNSトピックからSQSキューへのアクセスを許可する)
@@ -44,28 +47,28 @@ resource "aws_sqs_queue_policy" "allow_sns_to_sqs" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-        Effect = "Allow"
-        Principal = "*"
-        Action = "sqs:SendMessage"
-        Resource = aws_sqs_queue.drift_queue.arn
-        Condition = {
-          ArnEquals = {
-            "aws:SourceArn" = aws_sns_topic.drift_alerts.arn
-          }
+      Effect    = "Allow"
+      Principal = "*"
+      Action    = "sqs:SendMessage"
+      Resource  = aws_sqs_queue.drift_queue.arn
+      Condition = {
+        ArnEquals = {
+          "aws:SourceArn" = aws_sns_topic.drift_alerts.arn
         }
+      }
     }]
   })
 }
 
 # Lambda関数のIAMロール
 resource "aws_iam_role" "lambda_role" {
-  name = "${var.prefix}-lambda-role" 
+  name = "${var.prefix}-lambda-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-        Effect = "Allow"
-        Principal = { Service = "lambda.amazonaws.com" }
-        Action = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+      Action    = "sts:AssumeRole"
     }]
   })
 }
@@ -78,8 +81,8 @@ resource "aws_iam_role_policy" "lambda_kms_decrypt" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = "kms:Decrypt"
+      Effect = "Allow"
+      Action = "kms:Decrypt"
       # エラーログに出てきたKMSキーのARNを指定
       Resource = "arn:aws:kms:ap-northeast-1:859261896300:key/849d6ad7-cafc-4ac2-a832-309e9a38811a"
     }]
@@ -112,8 +115,8 @@ resource "aws_iam_role_policy" "lambda_ec2_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "ec2:DescribeSecurityGroups"
         ]
         Resource = "*"
@@ -148,23 +151,34 @@ resource "aws_iam_role_policy_attachment" "lambda_sqs" {
 # Lambda関数
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_dir = "src"                  // Lambda関数のコードファイルが含まれるディレクトリ
-  output_path = "lambda_function.zip" // 出力されるZIPファイルのパス
+  source_dir  = "src"                        // Lambda関数のコードファイルが含まれるディレクトリ
+  excludes    = ["test_*.py", "__pycache__"] // テストは、Lambdaに含めない
+  output_path = "lambda_function.zip"        // 出力されるZIPファイルのパス
 }
 
 resource "aws_lambda_function" "drift_handler" {
-  function_name = "${var.prefix}-drift-handler"
-  role          = aws_iam_role.lambda_role.arn
-  handler       = "app.lambda_handler"
-  runtime       = "python3.9"  
-  filename      = data.archive_file.lambda_zip.output_path            // Lambda関数のコードをZIPファイルとして指定
+  function_name    = "${var.prefix}-drift-handler"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "app.lambda_handler"
+  runtime          = "python3.9"
+  filename         = data.archive_file.lambda_zip.output_path         // Lambda関数のコードをZIPファイルとして指定
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256 // コードの変更を検知するためのハッシュ値
 
-  # 環境変数の設定（SlackのWebhook URLを渡す）
+  // Gateway経由の通知は、Cognitoのトークン取得とSlackへの送信で、数秒かかる
+  timeout = 30
+
+  # 環境変数の設定。Slackのtokenやクライアントのシークレットは、置かない
   environment {
     variables = {
-      SLACK_WEBHOOK_URL = var.SLACK_WEBHOOK_URL # 変数を参照する
-      DRIFT_TABLE_NAME  = aws_dynamodb_table.drift_events.name # 台帳のテーブル名
+      DRIFT_TABLE_NAME = aws_dynamodb_table.drift_events.name # 台帳のテーブル名
+      SLACK_CHANNEL_ID = var.slack_channel_id                 # 通知先のSlackチャンネルID
+      APPROVAL_API_URL = aws_api_gateway_stage.v1.invoke_url  # 申告・承認APIのURL(メッセージに載せる)
+
+      # AgentCore Gatewayを呼ぶための設定(2LO: Lambdaが、アプリ自身の権限でトークンを取る)
+      GATEWAY_URL      = aws_bedrockagentcore_gateway.main.gateway_url
+      TOKEN_URL        = "https://${aws_cognito_user_pool_domain.main.domain}.auth.${data.aws_region.current.region}.amazoncognito.com/oauth2/token"
+      CLIENT_ID        = aws_cognito_user_pool_client.drift_handler.id
+      CLIENT_SECRET_ID = aws_secretsmanager_secret.drift_handler_client.name # クライアントのシークレットは、Secrets Managerから読む
     }
   }
 }
@@ -184,7 +198,7 @@ resource "aws_cloudwatch_event_rule" "drift_rule" {
 
   // AWSコンソールからの手動変更（APIコール）を検知するためのパターン
   event_pattern = jsonencode({
-    source = ["aws.config"],
+    source      = ["aws.config"],
     detail-type = ["Config Configuration Item Change"],
     detail = {
       messageType = ["ConfigurationItemChangeNotification"],
@@ -193,12 +207,12 @@ resource "aws_cloudwatch_event_rule" "drift_rule" {
         resourceType = ["AWS::EC2::SecurityGroup"]
 
         # 監視対象のセキュリティグループのIDを指定
-        resourceId   = [
+        resourceId = [
           aws_security_group.alb_sg.id,
           aws_security_group.rds_sg.id,
           aws_security_group.bastion_sg.id,
           # aws_security_group.ecs_sg.id, # ECSは監視対象外
-          ] 
+        ]
       }
     }
   })
